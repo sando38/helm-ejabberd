@@ -1,0 +1,627 @@
+# Default values for ejabberd.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  # -- ejabberd image host registry
+  registry: ghcr.io
+  # -- ejabberd image repository
+  repository: sando38/ejabberd
+  # -- defaults to appVersion
+  tag: ""
+  # -- ejabberd image pull policy
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+
+# -- Add additional label to all resources
+commonLabels: {}
+
+#
+# Configure the statefulSet
+#
+statefulSet:
+  # -- Number of pods of the deployment
+  replicas: 3
+  # -- Number of old history to retain to allow rollback (If not set, default Kubernetes value is set to 10)
+  # revisionHistoryLimit: 1
+  # -- Amount of time (in seconds) before Kubernetes will send the SIGKILL signal if Traefik does not shut down
+  terminationGracePeriodSeconds: 60
+  # -- The minimum number of seconds Traefik needs to be up and running before the controller considers it available
+  minReadySeconds: 0
+  # -- Additional deployment annotations (e.g. for jaeger-operator sidecar injection)
+  annotations: {}
+  # -- Additional deployment labels (e.g. for filtering deployment by custom labels)
+  labels: {}
+  # -- Additional pod annotations (e.g. for mesh injection or prometheus scraping)
+  podAnnotations: {}
+  # -- Additional Pod labels (e.g. for filtering Pod by custom labels)
+  podLabels: {}
+  # -- Additional containers (e.g. for metric offloading sidecars)
+  additionalContainers: []
+    # https://docs.datadoghq.com/developers/dogstatsd/unix_socket/?tab=host
+    # - name: socat-proxy
+    #   image: alpine/socat:1.0.5
+    #   args: ["-s", "-u", "udp-recv:8125", "unix-sendto:/socket/socket"]
+    #   volumeMounts:
+    #     - name: dsdsocket
+    #       mountPath: /socket
+  # -- Additional volumes available for use with initContainers and additionalContainers
+  additionalVolumes: []
+    # - name: dsdsocket
+    #   hostPath:
+    #     path: /var/run/statsd-exporter
+  # -- Additional initContainers (e.g. for setting file permission as shown below)
+  initContainers: []
+    # The "volume-permissions" init container is required if you run into permission issues.
+    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
+    # - name: volume-permissions
+    #   image: busybox:latest
+    #   command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
+    #   securityContext:
+    #     runAsNonRoot: true
+    #     runAsGroup: 65532
+    #     runAsUser: 65532
+    #   volumeMounts:
+    #     - name: data
+    #       mountPath: /data
+  # -- Use process namespace sharing
+  shareProcessNamespace: false
+  # -- Custom pod DNS policy. Apply if `hostNetwork: true`
+  # dnsPolicy: ClusterFirstWithHostNet
+  dnsConfig: {}
+    # nameservers:
+    #   - 192.0.2.1 # this is an example
+    # searches:
+    #   - ns1.svc.cluster-domain.example
+    #   - my.dns.search.suffix
+    # options:
+    #   - name: ndots
+    #     value: "2"
+    #   - name: edns0
+  # -- Additional imagePullSecrets
+  imagePullSecrets: []
+    # - name: myRegistryKeySecretName
+  # -- Pod lifecycle actions
+  lifecycle: {}
+    # preStop:
+    #   exec:
+    #     command: ["/bin/sh", "-c", "sleep 40"]
+    # postStart:
+    #   httpGet:
+    #     path: /ping
+    #     port: 9000
+    #     host: localhost
+    #     scheme: HTTP
+
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 9000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 9000
+
+service:
+  enabled: true
+  ## -- Single service is using `MixedProtocolLBService` feature gate.
+  ## -- When set to false, it will create two Service, one for TCP and one for UDP.
+  single: true
+  type: LoadBalancer
+  # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
+  annotations: {}
+  # -- Additional annotations for TCP service only
+  annotationsTCP: {}
+  # -- Additional annotations for UDP service only
+  annotationsUDP: {}
+  # -- Additional service labels (e.g. for filtering Service by custom labels)
+  labels: {}
+  # -- Additional entries here will be added to the service spec.
+  # -- Cannot contain type, selector or ports entries.
+  spec: {}
+    # externalTrafficPolicy: Cluster
+    # loadBalancerIP: "1.2.3.4"
+    # clusterIP: "2.3.4.5"
+  loadBalancerSourceRanges: []
+    # - 192.168.0.1/32
+    # - 172.16.0.0/16
+  ## -- Class of the load balancer implementation
+  # loadBalancerClass: service.k8s.aws/nlb
+  externalIPs: []
+    # - 1.2.3.4
+  ## One of SingleStack, PreferDualStack, or RequireDualStack.
+  # ipFamilyPolicy: SingleStack
+  ## List of IP families (e.g. IPv4 and/or IPv6).
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+  # ipFamilies:
+  #   - IPv4
+  #   - IPv6
+  ##
+  ## -- An additionnal and optional internal Service.
+  ## Same parameters as external Service
+  # internal:
+  #   type: ClusterIP
+  #   # labels: {}
+  #   # annotations: {}
+  #   # spec: {}
+  #   # loadBalancerSourceRanges: []
+  #   # externalIPs: []
+  #   # ipFamilies: [ "IPv4","IPv6" ]
+
+
+#
+# ejabberd configuration
+# the following items represent the top-level options
+# https://docs.ejabberd.im/admin/configuration/toplevel
+#
+# https://docs.ejabberd.im/admin/configuration/toplevel/#hosts
+hosts:
+  - example.com
+  - localhost
+
+#
+# certificates for ejabberd hosts, must be .pem files
+#
+certFiles:
+  # -- Please specify your kubernetes secret containing the tls certificates for
+  # the domains specified in .Values.hosts, otherwise the service will not work
+  secretName: ""
+  # -- can usually be left as is
+  path: "/opt/ejabberd/certs"
+
+#
+# global macros for reuse in the configuration
+# https://docs.ejabberd.im/admin/configuration/toplevel/#define-macro
+defineMacro:
+  TLS_CIPHERS: ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256
+  TLS_OPTIONS:
+    - no_sslv3
+    - no_tlsv1
+    - no_tlsv1_1
+    - cipher_server_preference
+    - no_compression
+
+#
+# Logging
+# https://docs.ejabberd.im/admin/configuration/toplevel/#loglevel
+logging:
+  loglevel: info
+  # log_rotate_size: 10485760
+  # log_rotate_count: 1
+  # hide_sensitive_log_data: true
+
+#
+# Configure ejabberd's service port definitions
+# The ejabberd specifics except 'port' is defined in .Values.listen.NAME.options
+# https://docs.ejabberd.im/admin/configuration/listen-options/
+listen:
+  c2s:
+    port: 5222
+    # hostPort: 5222
+    # containerPort: 5222
+    expose: true
+    exposedPort: 5222
+    ## -- Different target traefik port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured Traefik in a
+    # LoadBalancer.
+    # nodePort: 30222
+    # -- c2s top-level listener options:
+    #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
+    topLevelOptions:
+      c2s_ciphers: TLS_CIPHERS
+      c2s_protocol_options: TLS_OPTIONS
+    # -- ejabberd listener options w/o the port:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_c2s
+      max_stanza_size: 262144
+      shaper: c2s_shaper
+      access: c2s
+      starttls_required: true
+  s2s:
+    port: 5269
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: true
+    exposedPort: 5269
+    ## -- Different target traefik port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured Traefik in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- s2s top-level listener options:
+    #    https://docs.ejabberd.im/admin/configuration/toplevel/#s2s-access
+    topLevelOptions:
+      s2s_ciphers: TLS_CIPHERS
+      s2s_protocol_options: TLS_OPTIONS
+      s2s_use_starttls: required
+    # -- ejabberd listener options w/o the port:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_s2s_in
+      max_stanza_size: 524288
+
+#
+# https://docs.ejabberd.im/admin/configuration/toplevel/#acl
+#
+acl:
+  local:
+    user_regexp: ""
+  loopback:
+    ip:
+      - 127.0.0.0/8
+      - ::1/128
+
+#
+# https://docs.ejabberd.im/admin/configuration/toplevel/#access-rules
+#
+accessRules:
+  local:
+    allow: local
+  c2s:
+    deny: blocked
+    allow: all
+  announce:
+    allow: admin
+  configure:
+    allow: admin
+  muc_create:
+    allow: local
+  pubsub_createnode:
+    allow: local
+  trusted_network:
+    allow: loopback
+
+#
+# https://docs.ejabberd.im/admin/configuration/toplevel/#api-permissions
+#
+apiPermissions:
+  "console commands":
+    from:
+      - ejabberd_ctl
+    who: all
+    what: "*"
+  "admin access":
+    who:
+      access:
+        allow:
+          - acl: loopback
+          - acl: admin
+      oauth:
+        scope: "ejabberd:admin"
+        access:
+          allow:
+            - acl: loopback
+            - acl: admin
+    what:
+      - "*"
+      - "!stop"
+      - "!start"
+  "public commands":
+    who:
+      ip: 127.0.0.1/8
+    what:
+      - status
+      - connected_users_number
+
+#
+# https://docs.ejabberd.im/admin/configuration/toplevel/#shaper
+#
+shaper:
+  normal:
+    rate: 3000
+    burst_size: 20000
+  fast: 100000
+
+#
+# https://docs.ejabberd.im/admin/configuration/toplevel/#shaper-rules
+#
+shaperRules:
+  max_user_sessions: 10
+  max_user_offline_messages:
+    5000: admin
+    100: all
+  c2s_shaper:
+    none: admin
+    normal: all
+  s2s_shaper: fast
+
+
+#
+# install contribution modules
+# https://docs.ejabberd.im/admin/configuration/toplevel/#allow-contrib-modules
+#
+# List of modules can be found here:
+# https://github.com/processone/ejabberd-contrib
+#
+# Hint:
+# -- The image ghcr.io/sando38/ejabberd:xx.xx-k8s includes the modules
+#    ejabberd_auth_http, mod_captcha_rust, mod_ecaptcha & mod_s3_upload already.
+#
+installContribModules: {}
+  # allow_contrib_modules: true
+  # install_contrib_modules:
+  #   - mod_default_rooms
+  #   - mod_statsdx
+  #   - mod_shcommands
+  #   - mod_webadmin_config
+  #   - mod_webpresence
+
+#
+# ejabberd modules
+#
+modules:
+  mod_adhoc: {}
+  mod_admin_extra: {}
+  mod_announce:
+    access: announce
+  mod_avatar: {}
+  mod_blocking: {}
+  mod_bosh: {}
+  mod_caps: {}
+  mod_carboncopy: {}
+  mod_client_state: {}
+  mod_configure: {}
+  mod_disco: {}
+  mod_fail2ban: {}
+  mod_http_api: {}
+  mod_http_upload:
+    put_url: https://@HOST@:5443/upload
+    custom_headers:
+      "Access-Control-Allow-Origin": "https://@HOST@"
+      "Access-Control-Allow-Methods": "GET,HEAD,PUT,OPTIONS"
+      "Access-Control-Allow-Headers": "Content-Type"
+  mod_last: {}
+  mod_mam:
+    ## Mnesia is limited to 2GB, better to use an SQL backend
+    ## For small servers SQLite is a good fit and is very easy
+    ## to configure. Uncomment this when you have SQL configured:
+    ## db_type: sql
+    assume_mam_usage: true
+    default: always
+  mod_mqtt: {}
+  mod_muc:
+    access:
+      - allow
+    access_admin:
+      - allow: admin
+    access_create: muc_create
+    access_persistent: muc_create
+    access_mam:
+      - allow
+    default_room_options:
+      mam: true
+  mod_muc_admin: {}
+  mod_offline:
+    access_max_user_messages: max_user_offline_messages
+  mod_ping: {}
+  mod_privacy: {}
+  mod_private: {}
+  mod_proxy65:
+    access: local
+    max_connections: 5
+  mod_pubsub:
+    access_createnode: pubsub_createnode
+    plugins:
+      - flat
+      - pep
+    force_node_config:
+      ## Avoid buggy clients to make their bookmarks public
+      storage:bookmarks:
+        access_model: whitelist
+  mod_push: {}
+  mod_push_keepalive: {}
+  mod_register:
+    ## Only accept registration requests from the "trusted"
+    ## network (see access_rules section above).
+    ## Think twice before enabling registration from any
+    ## address. See the Jabber SPAM Manifesto for details:
+    ## https://github.com/ge0rg/jabber-spam-fighting-manifesto
+    ip_access: trusted_network
+  mod_roster:
+    versioning: true
+  mod_s2s_dialback: {}
+  mod_shared_roster: {}
+  mod_stream_mgmt:
+    resend_on_timeout: if_offline
+  mod_stun_disco: {}
+  mod_vcard: {}
+  mod_vcard_xupdate: {}
+  mod_version:
+    show_os: false
+
+#
+# Authentification method
+#
+authentification:
+  # https://docs.ejabberd.im/admin/configuration/authentication/
+  # more options here:
+  # https://docs.ejabberd.im/admin/configuration/toplevel/#auth-cache-life-time
+  # -- if you want to use LDAP, etc. you also need to enable the respective
+  #    modules below, e.g. .Values.ldap.enabled or .Values.sqlDatabase.enabled
+  method:
+    - internal
+  auth_password_format: scram
+  # auth_scram_hash: sha256
+
+#
+# LDAP configuration:
+# https://docs.ejabberd.im/admin/configuration/ldap/
+ldap:
+  enabled: false
+  # Variables can be found here:
+  # https://docs.ejabberd.im/admin/configuration/toplevel/#ldap-backups
+  config:
+    ## DNS name of our LDAP server
+    ldap_servers: [ldap.example.org]
+    ## Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
+    ldap_rootdn: "cn=Manager,dc=example,dc=org"
+    ldap_password: secret
+    ldap_encrypt: tls
+    ldap_port: 6123
+    ## Define the user's base
+    ldap_base: "ou=Users,dc=example,dc=org"
+    ## We want to authorize users from 'shadowAccount' object class only
+    ldap_filter: "(objectClass=shadowAccount)"
+
+#
+# Database configuration
+# https://docs.ejabberd.im/admin/configuration/database/
+sqlDatabase:
+  enabled: false
+  # https://docs.ejabberd.im/admin/configuration/database/#default-database
+  defaultDb: sql
+  # https://docs.ejabberd.im/admin/configuration/database/#relational-databases
+  newSqlSchema: false
+  # Variables can be found here:
+  # https://docs.ejabberd.im/admin/configuration/toplevel/#sql-connect-timeout
+  config:
+    sql_type: pgsql
+    sql_server: pgsql
+    sql_port: 5432
+    sql_ssl: false
+    sql_database: ejabberd
+    sql_username: ejabberd
+    sql_password: ejabberd
+
+#
+# redis configuration:
+# https://docs.ejabberd.im/admin/configuration/database/#redis
+redis:
+  enabled: false
+  # https://docs.ejabberd.im/admin/configuration/toplevel/#default-ram-db
+  defaultRamDb: redis
+  # Variables can be found here:
+  # https://docs.ejabberd.im/admin/configuration/toplevel/#redis-connect-timeout
+  config:
+    redis_server: redis
+    redis_port: 6379
+    redis_db: 1
+    # redis_password: redis
+    # redis_pool_size:
+    # redis_queue_type:
+
+#
+# CAPTCHA configuration
+# https://docs.ejabberd.im/admin/configuration/basic/#captcha
+#
+captcha: {}
+  # captcha_cmd: mod_ecaptcha
+  # captcha_url: auto
+
+#
+# Additional ejabberd.yml configurations:
+# Be careful to indent correctly.
+#
+# See here for any missing items:
+# https://docs.ejabberd.im/admin/configuration/toplevel/
+#
+additonalConfigurationItems: {}
+  # disable_sasl_mechanisms:
+  #   - "digest-md5"
+  #   - "x-oauth2"
+  # language: "en"
+
+#
+# -- Create a persistent volume for mnesia database.
+#
+persistence:
+  enabled: true
+  ## database data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "standard-singlewriter"
+  # existingClaim: openldap-pvc
+  accessModes:
+    - ReadWriteOnce
+  size: 2Gi
+  storageClass: ""
+  annotations: {}
+
+#
+# -- Add volumes to the traefik pod. The volume name will be passed to tpl.
+# This can be used to mount a cert pair or a configmap that holds a config.toml file.
+Volumes: []
+# - name: upload
+#   mountPath: "/opt/ejabberd/upload"
+# - name: '{{ printf "%s-configs" .Release.Name }}'
+#   mountPath: "/config"
+
+# -- Additional volumeMounts to add to the Traefik container
+additionalVolumeMounts: []
+  # -- For instance when using a logshipper for access logs
+  # - name: traefik-logs
+  #   mountPath: /var/log/traefik
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 3
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

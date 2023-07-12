@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ejabberd.fullname" . }}-config
+  namespace: {{ template "ejabberd.namespace" . }}
+  labels:
+    {{- include "ejabberd.labels" $ | nindent 4 }}
+data:
+  ejabberd.yml: |-
+    # virtual hosts
+    hosts:
+    {{- toYaml .Values.hosts | nindent 6 }}
+
+    # CA & tls certificates
+    ca_file: /opt/ejabberd/conf/cacert.pem
+    certfiles: {{ .Values.certFiles.path }}/*.pem
+
+    # logging
+    {{- toYaml .Values.logging | nindent 4 }}
+
+    define_macro:
+    {{- toYaml .Values.defineMacro | nindent 6 }}
+
+    # listener options
+    ## top-level
+    {{- range $name, $config := .Values.listen }}
+    {{- toYaml $config.topLevelOptions | nindent 4 }}
+    {{- end }}
+
+    ## per listener
+    listen:
+    {{- range $name, $config := .Values.listen }}
+      -
+        port: {{ $config.port }}
+    {{- toYaml $config.options | nindent 8 }}
+    {{- end }}
+
+    acl:
+    {{- toYaml .Values.acl | nindent 6 }}
+
+    access_rules:
+    {{- toYaml .Values.accessRules | nindent 6 }}
+
+    api_permissions:
+    {{- toYaml .Values.apiPermissions | nindent 6 }}
+
+    shaper:
+    {{- toYaml .Values.shaper | nindent 6 }}
+
+    shaper_rules:
+    {{- toYaml .Values.shaperRules | nindent 6 }}
+
+    # authentification method
+    {{- toYaml .Values.authentification | nindent 4 }}
+
+    {{- if .Values.ldap.enabled }}
+    # LDAP configuration
+    {{- toYaml .Values.ldap.config | nindent 4 }}
+    {{- end }}
+
+    {{- if .Values.sqlDatabase.enabled }}
+    # database configuration
+    default_db: {{ default "mnesia" .Values.sqlDatabase.defaultDb | quote }}
+    new_sql_schema: {{ default "false" .Values.sqlDatabase.newSqlSchema | quote }}
+    {{- toYaml .Values.sqlDatabase.config | nindent 4 }}
+    {{- end }}
+
+    {{- if .Values.redis.enabled }}
+    # redis configuration
+    default_ram_db: {{ default "mnesia" .Values.redis.defaultRamDb | quote }}
+    {{- toYaml .Values.redis.config | nindent 4 }}
+    {{- end }}
+
+    # ejabberd modules
+    {{- if .Values.installContribModules }}
+    {{- toYaml .Values.installContribModules | nindent 4 }}
+    {{- end }}
+    modules:
+    {{- toYaml .Values.modules | nindent 6 }}
+
+    {{- if .Values.captcha }}
+    # CAPTCHA configuration
+    {{- toYaml .Values.captcha | nindent 4 }}
+    {{- end }}
+
+    {{- if .Values.additonalConfigurationItems }}
+    {{- toYaml .Values.additonalConfigurationItems | nindent 4 }}
+    {{- end }}
