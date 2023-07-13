@@ -9,7 +9,7 @@ The chart configures the environment needed to build and run ejabberd clusters.
 Additionally, the `values.yaml` file allows to include most of the configuration
 items, ejabberd offers in their [`ejabberd.yml`](https://github.com/processone/ejabberd/blob/master/ejabberd.yml.example).
 
-The chart and its items can be found [here](chart/ejabberd).
+The chart and its items can be found [here](charts/ejabberd).
 
 ## Current state
 
