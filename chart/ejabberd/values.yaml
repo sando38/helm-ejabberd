@@ -666,8 +666,8 @@ envFrom: []
 
 #
 # -- Create a persistent volume for mnesia database.
-#    NOTE:
-#    It is strongly recommended to use a sql database, see: .Values.sqlDatabase
+#  NOTE:
+#  It is strongly recommended to use a sql database, see: .Values.sqlDatabase
 #
 persistence:
   enabled: true
@@ -679,7 +679,6 @@ persistence:
   ##   GKE, AWS & OpenStack)
   ##
   # storageClass: "standard-singlewriter"
-  # existingClaim: openldap-pvc
   accessModes:
     - ReadWriteOnce
   size: 2Gi
