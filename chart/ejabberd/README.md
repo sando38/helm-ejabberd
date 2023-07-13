@@ -27,6 +27,13 @@ you need to enable `featureGates: 'AdditionalCertificateOutputFormats=true'`.
 The mounted secret should contain all certificates for all domains defined in
 `.Values.hosts`.
 
+Currently the chart does not deploy ejabberd's builtin TURN server correctly. It
+may work with using `.Values.hostNetwork` set to `true`, but that is completely
+untested and only a potential lead. However, the STUN service works as expected.
+
+For deploying a TURN server, you can check e.g. ejabberd's child project
+[eturnal](https://github.com/processone/eturnal) which shares the same code.
+
 ## Adding the helm repository
 
     helm repo add ejabberd https://sando38.github.io/helm-ejabberd
