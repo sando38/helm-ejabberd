@@ -23,15 +23,16 @@ data:
 
     # listener options
     ## top-level
-    {{- range $name, $config := .Values.listen }}
-    {{- toYaml $config.topLevelOptions | nindent 4 }}
+    {{- if .Values.listenGlobal }}
+    {{- toYaml .Values.listenGlobal | nindent 4 }}
     {{- end }}
 
     ## per listener
     listen:
     {{- range $name, $config := .Values.listen }}
       -
-        port: {{ $config.port }}
+        port: {{ default $config.port $config.containerPort }}
+        transport: {{ default "TCP" $config.protocol | lower | quote }}
     {{- toYaml $config.options | nindent 8 }}
     {{- end }}
 

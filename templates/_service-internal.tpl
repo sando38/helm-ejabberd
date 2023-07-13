@@ -1,53 +1,47 @@
-{{- define "ejabberd.service-metadata" }}
+{{- define "ejabberd.service-internal-metadata" }}
   labels:
   {{- include "ejabberd.labels" . | nindent 4 -}}
-  {{- with .Values.service.labels }}
+  {{- with .Values.service.internal.labels }}
   {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}
 
-{{- define "ejabberd.service-spec" -}}
-  {{- $type := default "LoadBalancer" .Values.service.type }}
+{{- define "ejabberd.service-internal-spec" -}}
+  {{- $type := default "ClusterIP" .Values.service.internal.type }}
   type: {{ $type }}
-  {{- with .Values.service.loadBalancerClass }}
-  loadBalancerClass: {{ . }}
-  {{- end}}
-  {{- with .Values.service.spec }}
+  {{- with .Values.service.internal.spec }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
   selector:
     {{- include "ejabberd.selectorLabels" . | nindent 4 }}
   {{- if eq $type "LoadBalancer" }}
-  {{- with .Values.service.loadBalancerSourceRanges }}
+  {{- with .Values.service.internal.loadBalancerSourceRanges }}
   loadBalancerSourceRanges:
   {{- toYaml . | nindent 2 }}
   {{- end -}}
   {{- end -}}
-  {{- with .Values.service.externalIPs }}
+  {{- with .Values.service.internal.externalIPs }}
   externalIPs:
   {{- toYaml . | nindent 2 }}
   {{- end -}}
-  {{- with .Values.service.ipFamilyPolicy }}
+  {{- with .Values.service.internal.ipFamilyPolicy }}
   ipFamilyPolicy: {{ . }}
   {{- end }}
-  {{- with .Values.service.ipFamilies }}
+  {{- with .Values.service.internal.ipFamilies }}
   ipFamilies:
   {{- toYaml . | nindent 2 }}
   {{- end -}}
 {{- end }}
 
-{{- define "ejabberd.service-ports" }}
+{{- define "ejabberd.service-internal-ports" }}
   {{- range $name, $config := . }}
-  {{- if $config.expose }}
+  {{- if not (eq (toString $config.expose) `"false"`) }}
   - port: {{ default $config.port $config.exposedPort }}
     name: {{ $name | quote }}
     targetPort: {{ default $name $config.targetPort }}
     protocol: {{ default "TCP" $config.protocol }}
     {{- if $config.nodePort }}
     nodePort: {{ $config.nodePort }}
-    {{- end }}
-    {{- if $config.appProtocol }}
-    appProtocol: {{ $config.appProtocol }}
     {{- end }}
   {{- end }}
   {{- end }}

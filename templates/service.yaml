@@ -1,16 +1,60 @@
+{{- if .Values.service.enabled -}}
+
+{{- $tcpPorts := dict -}}
+{{- $udpPorts := dict -}}
+{{- $exposedPorts := false -}}
+{{- range $name, $config := .Values.listen -}}
+  {{- if eq (toString $config.protocol) "UDP" -}}
+    {{ $_ := set $udpPorts $name $config -}}
+  {{- end -}}
+  {{- if eq (toString (default "TCP" $config.protocol)) "TCP" -}}
+    {{ $_ := set $tcpPorts $name $config -}}
+  {{- end -}}
+  {{- if (eq $config.expose true) -}}
+    {{- $exposedPorts = true -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if (eq $exposedPorts false) -}}
+  {{- fail "You need to expose at least one port or set enabled=false to service" -}}
+{{- end -}}
+
+{{- if and $exposedPorts (or $tcpPorts .Values.service.single) }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "ejabberd.fullname" . }}
+  name: {{ template "ejabberd.fullname" . }}
   namespace: {{ template "ejabberd.namespace" . }}
-  labels:
-    {{- include "ejabberd.labels" . | nindent 4 }}
+  {{- template "ejabberd.service-metadata" . }}
+  annotations:
+  {{- with (merge dict .Values.service.annotationsTCP .Values.service.annotations) }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  type: {{ .Values.service.type }}
+  {{- template "ejabberd.service-spec" . }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
-  selector:
-    {{- include "ejabberd.selectorLabels" . | nindent 4 }}
+  {{- template "ejabberd.service-ports" $tcpPorts }}
+{{- if .Values.service.single }}
+  {{- template "ejabberd.service-ports" $udpPorts }}
+{{- end }}
+{{- end }}
+
+{{- if and $exposedPorts (and $udpPorts (not .Values.service.single)) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "ejabberd.fullname" . }}-udp
+  namespace: {{ template "ejabberd.namespace" . }}
+  {{- template "ejabberd.service-metadata" . }}
+  annotations:
+  {{- with (merge dict .Values.service.annotationsUDP .Values.service.annotations) }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- template "ejabberd.service-spec" . }}
+  ports:
+  {{- template "ejabberd.service-ports" $udpPorts }}
+{{- end }}
+
+{{- end -}}

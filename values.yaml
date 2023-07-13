@@ -20,6 +20,13 @@ namespaceOverride: ""
 # -- Add additional label to all resources
 commonLabels: {}
 
+updateStrategy:
+  # -- Customize updateStrategy: RollingUpdate or OnDelete
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
 #
 # Configure the statefulSet
 #
@@ -28,9 +35,9 @@ statefulSet:
   replicas: 3
   # -- Number of old history to retain to allow rollback (If not set, default Kubernetes value is set to 10)
   # revisionHistoryLimit: 1
-  # -- Amount of time (in seconds) before Kubernetes will send the SIGKILL signal if Traefik does not shut down
+  # -- Amount of time (in seconds) before Kubernetes will send the SIGKILL signal if ejabberd does not shut down
   terminationGracePeriodSeconds: 60
-  # -- The minimum number of seconds Traefik needs to be up and running before the controller considers it available
+  # -- The minimum number of seconds ejabberd needs to be up and running before the controller considers it available
   minReadySeconds: 0
   # -- Additional deployment annotations (e.g. for jaeger-operator sidecar injection)
   annotations: {}
@@ -42,32 +49,22 @@ statefulSet:
   podLabels: {}
   # -- Additional containers (e.g. for metric offloading sidecars)
   additionalContainers: []
-    # https://docs.datadoghq.com/developers/dogstatsd/unix_socket/?tab=host
-    # - name: socat-proxy
-    #   image: alpine/socat:1.0.5
-    #   args: ["-s", "-u", "udp-recv:8125", "unix-sendto:/socket/socket"]
-    #   volumeMounts:
-    #     - name: dsdsocket
-    #       mountPath: /socket
   # -- Additional volumes available for use with initContainers and additionalContainers
   additionalVolumes: []
-    # - name: dsdsocket
-    #   hostPath:
-    #     path: /var/run/statsd-exporter
   # -- Additional initContainers (e.g. for setting file permission as shown below)
   initContainers: []
     # The "volume-permissions" init container is required if you run into permission issues.
     # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
     # - name: volume-permissions
     #   image: busybox:latest
-    #   command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
+    #   command: ["sh", "-c", chown -R 9000:9000 /opt/ejabberd/upload"]
     #   securityContext:
     #     runAsNonRoot: true
-    #     runAsGroup: 65532
-    #     runAsUser: 65532
+    #     runAsGroup: 9000
+    #     runAsUser: 9000
     #   volumeMounts:
-    #     - name: data
-    #       mountPath: /data
+    #     - name: upload
+    #       mountPath: /opt/ejabberd/upload
   # -- Use process namespace sharing
   shareProcessNamespace: false
   # -- Custom pod DNS policy. Apply if `hostNetwork: true`
@@ -91,9 +88,9 @@ statefulSet:
     #   exec:
     #     command: ["/bin/sh", "-c", "sleep 40"]
     # postStart:
-    #   httpGet:
+    #   tcpSocket:
     #     path: /ping
-    #     port: 9000
+    #     port: 5222
     #     host: localhost
     #     scheme: HTTP
 
@@ -157,10 +154,10 @@ service:
   #   - IPv4
   #   - IPv6
   ##
-  ## -- An additionnal and optional internal Service.
+  ## -- An additionnal internal Service for non-exposed container ports.
   ## Same parameters as external Service
-  # internal:
-  #   type: ClusterIP
+  internal:
+    type: ClusterIP
   #   # labels: {}
   #   # annotations: {}
   #   # spec: {}
@@ -168,6 +165,16 @@ service:
   #   # externalIPs: []
   #   # ipFamilies: [ "IPv4","IPv6" ]
 
+#
+# The chart currently relies on reloader https://github.com/stakater/Reloader to
+# trigger updates of mounted certifcates into the ejabberd containers
+#
+reloader:
+  # -- set to false, if you have reloader already installed in your cluster
+  #    or do not wish to install it at all, also set enabled=false in that case.
+  install: false
+  # -- set to false, if you do not want reloader to manage certificate "renewal"
+  enabled: true
 
 #
 # ejabberd configuration
@@ -212,8 +219,20 @@ logging:
 
 #
 # Configure ejabberd's service port definitions
-# The ejabberd specifics except 'port' is defined in .Values.listen.NAME.options
-# https://docs.ejabberd.im/admin/configuration/listen-options/
+#
+listenGlobal:
+  # -- c2s top-level listener options:
+  #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
+  c2s_ciphers: TLS_CIPHERS
+  c2s_protocol_options: TLS_OPTIONS
+  # -- s2s top-level listener options:
+  #    https://docs.ejabberd.im/admin/configuration/toplevel/#s2s-access
+  s2s_ciphers: TLS_CIPHERS
+  s2s_protocol_options: TLS_OPTIONS
+  s2s_use_starttls: required
+# -- The ejabberd specifics except port, transport are defined in
+# -- .Values.listen.NAME.options
+# -- https://docs.ejabberd.im/admin/configuration/listen-options/
 listen:
   c2s:
     port: 5222
@@ -225,15 +244,13 @@ listen:
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: TCP
-    # -- Use nodeport if set. This is useful if you have configured Traefik in a
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
     # LoadBalancer.
     # nodePort: 30222
     # -- c2s top-level listener options:
     #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
     topLevelOptions:
-      c2s_ciphers: TLS_CIPHERS
-      c2s_protocol_options: TLS_OPTIONS
-    # -- ejabberd listener options w/o the port:
+    # -- ejabberd listener options w/o port, transport:
     #    https://docs.ejabberd.im/admin/configuration/listen-options/
     options:
       ip: "::"
@@ -253,21 +270,89 @@ listen:
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: TCP
-    # -- Use nodeport if set. This is useful if you have configured Traefik in a
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
     # LoadBalancer.
     # nodePort: 30269
-    # -- s2s top-level listener options:
-    #    https://docs.ejabberd.im/admin/configuration/toplevel/#s2s-access
-    topLevelOptions:
-      s2s_ciphers: TLS_CIPHERS
-      s2s_protocol_options: TLS_OPTIONS
-      s2s_use_starttls: required
-    # -- ejabberd listener options w/o the port:
+    # -- ejabberd listener options w/o port, transport:
     #    https://docs.ejabberd.im/admin/configuration/listen-options/
     options:
       ip: "::"
       module: ejabberd_s2s_in
       max_stanza_size: 524288
+  http:
+    port: 5280
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: false
+    exposedPort: 5280
+    ## -- Different target traefik port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_http
+      request_handlers:
+        /admin: ejabberd_web_admin
+        /.well-known/acme-challenge: ejabberd_acme
+  https:
+    port: 5443
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: true
+    exposedPort: 5443
+    ## -- Different target traefik port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_http
+      tls: true
+      request_handlers:
+        /admin: ejabberd_web_admin
+        /api: mod_http_api
+        /bosh: mod_bosh
+        /captcha: ejabberd_captcha
+        /upload: mod_http_upload
+        /ws: ejabberd_http_ws
+  stun:
+    port: 3478
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: true
+    exposedPort: 3478
+    ## -- Different target traefik port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: UDP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_stun
+      use_turn: false
+      ## The server's public IPv4 address:
+      # turn_ipv4_address: "203.0.113.3"
+      ## The server's public IPv6 address:
+      # turn_ipv6_address: "2001:db8::3"
+
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#acl
@@ -550,6 +635,34 @@ additonalConfigurationItems: {}
   #   - "x-oauth2"
   # language: "en"
 
+# -- Environment variables to be passed to ejabberd
+env:
+# -- for clustering, the erlang.cookie is needed
+- name: ERLANG_COOKIE
+  value: YouR-3rl4n6-C00k!3
+# - name: CTL_ON_CREATE
+#   value: "register admin localhost asd"
+# - name: CTL_ON_START
+#   value: "stats registeredusers ; check_password admin localhost asd ; status"
+# - name: SOME_VAR_FROM_CONFIG_MAP
+#   valueFrom:
+#     configMapRef:
+#       name: configmap-name
+#       key: config-key
+# - name: SOME_SECRET
+#   valueFrom:
+#     secretKeyRef:
+#       name: secret-name
+#       key: secret-key
+
+# -- Environment variables to be passed to ejabberd from configMaps or secrets
+envFrom: []
+# - configMapRef:
+#     name: config-map-name
+# - secretRef:
+#     name: secret-name
+
+
 #
 # -- Create a persistent volume for mnesia database.
 #
@@ -579,7 +692,7 @@ Volumes: []
 # - name: '{{ printf "%s-configs" .Release.Name }}'
 #   mountPath: "/config"
 
-# -- Additional volumeMounts to add to the Traefik container
+# -- Additional volumeMounts to add to the ejabberd container
 additionalVolumeMounts: []
   # -- For instance when using a logshipper for access logs
   # - name: traefik-logs
@@ -592,7 +705,7 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
+    - host: ejabberd.local
       paths:
         - path: /
           pathType: ImplementationSpecific

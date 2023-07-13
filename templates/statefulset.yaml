@@ -12,7 +12,7 @@ metadata:
   {{- with .Values.statefulSet.annotations }}
   {{- toYaml . | nindent 4 }}
   {{- end }}
-    reloader.stakater.com/auto: "true"
+    reloader.stakater.com/auto: {{ .Values.reloader.enabled | quote }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ default 1 .Values.statefulSet.replicas }}
