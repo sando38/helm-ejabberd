@@ -50,8 +50,7 @@ statefulSet:
   additionalVolumes: []
   # -- Additional initContainers (e.g. for setting file permission as shown below)
   initContainers: []
-    # The "volume-permissions" init container is required if you run into permission issues.
-    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
+    # The "volume-permissions" init container may be required if you run into permission issues.\
     # - name: volume-permissions
     #   image: busybox:latest
     #   command: ["sh", "-c", chown -R 9000:9000 /opt/ejabberd/upload"]
@@ -90,7 +89,6 @@ statefulSet:
     #     port: 5222
     #     host: localhost
     #     scheme: HTTP
-
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -243,7 +241,7 @@ listen:
     # containerPort: 5222
     expose: true
     exposedPort: 5222
-    ## -- Different target traefik port on the cluster, useful for IP type LB
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: TCP
@@ -269,7 +267,7 @@ listen:
     # containerPort: 8000
     expose: true
     exposedPort: 5269
-    ## -- Different target traefik port on the cluster, useful for IP type LB
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: TCP
@@ -289,7 +287,7 @@ listen:
     # containerPort: 8000
     expose: false
     exposedPort: 5280
-    ## -- Different target traefik port on the cluster, useful for IP type LB
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: TCP
@@ -311,7 +309,7 @@ listen:
     # containerPort: 8000
     expose: true
     exposedPort: 5443
-    ## -- Different target traefik port on the cluster, useful for IP type LB
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: TCP
@@ -338,7 +336,7 @@ listen:
     # containerPort: 8000
     expose: true
     exposedPort: 3478
-    ## -- Different target traefik port on the cluster, useful for IP type LB
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
     # targetPort: 80
     # The port protocol (TCP/UDP)
     protocol: UDP
@@ -689,7 +687,7 @@ persistence:
   annotations: {}
 
 #
-# -- Add volumes to the traefik pod. The volume name will be passed to tpl.
+# -- Add volumes to the ejabberd pod. The volume name will be passed to tpl.
 # This can be used to mount a cert pair or a configmap that holds a config.toml file.
 volumes: []
 # - name: run-ejabberd

@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: "{{ include "ejabberd.fullname" . }}-test-connection"
+  namespace: {{ template "ejabberd.namespace" . }}
   labels:
     {{- include "ejabberd.labels" . | nindent 4 }}
   annotations:
