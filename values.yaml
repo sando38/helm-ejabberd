@@ -23,9 +23,6 @@ commonLabels: {}
 updateStrategy:
   # -- Customize updateStrategy: RollingUpdate or OnDelete
   type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 0
-    maxSurge: 1
 
 #
 # Configure the statefulSet
@@ -164,6 +161,13 @@ service:
   #   # loadBalancerSourceRanges: []
   #   # externalIPs: []
   #   # ipFamilies: [ "IPv4","IPv6" ]
+  ##
+  ## -- A headless service to enable clustering.
+  headless:
+    erlDistPort: 5210
+  #   # labels: {}
+  #   # annotations: {}
+  #   # spec: {}
 
 #
 # The chart currently relies on reloader https://github.com/stakater/Reloader to
@@ -172,7 +176,7 @@ service:
 reloader:
   # -- set to false, if you have reloader already installed in your cluster
   #    or do not wish to install it at all, also set enabled=false in that case.
-  install: false
+  install: true
   # -- set to false, if you do not want reloader to manage certificate "renewal"
   enabled: true
 
@@ -183,7 +187,6 @@ reloader:
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#hosts
 hosts:
-  - example.com
   - localhost
 
 #
@@ -552,7 +555,7 @@ authentification:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#auth-cache-life-time
   # -- if you want to use LDAP, etc. you also need to enable the respective
   #    modules below, e.g. .Values.ldap.enabled or .Values.sqlDatabase.enabled
-  method:
+  auth_method:
     - internal
   auth_password_format: scram
   # auth_scram_hash: sha256
@@ -626,7 +629,7 @@ captcha: {}
 # Additional ejabberd.yml configurations:
 # Be careful to indent correctly.
 #
-# See here for any missing items:
+# See here for any missing items, ACME is disabled hardcoded:
 # https://docs.ejabberd.im/admin/configuration/toplevel/
 #
 additonalConfigurationItems: {}
@@ -643,7 +646,7 @@ env:
 # - name: CTL_ON_CREATE
 #   value: "register admin localhost asd"
 # - name: CTL_ON_START
-#   value: "stats registeredusers ; check_password admin localhost asd ; status"
+#   value: "stats registeredusers ; status"
 # - name: SOME_VAR_FROM_CONFIG_MAP
 #   valueFrom:
 #     configMapRef:
@@ -665,6 +668,8 @@ envFrom: []
 
 #
 # -- Create a persistent volume for mnesia database.
+#    NOTE:
+#    It is strongly recommended to use a sql database, see: .Values.sqlDatabase
 #
 persistence:
   enabled: true
@@ -686,7 +691,16 @@ persistence:
 #
 # -- Add volumes to the traefik pod. The volume name will be passed to tpl.
 # This can be used to mount a cert pair or a configmap that holds a config.toml file.
-Volumes: []
+volumes: []
+# - name: run-ejabberd
+#   configMap:
+#     name: run-ejabberd
+#     defaultMode: 0755
+#     items:
+#     - key: run.sh
+#       path: run.sh
+#     - key: ejabberdctl
+#       path: ejabberdctl
 # - name: upload
 #   mountPath: "/opt/ejabberd/upload"
 # - name: '{{ printf "%s-configs" .Release.Name }}'
@@ -694,9 +708,8 @@ Volumes: []
 
 # -- Additional volumeMounts to add to the ejabberd container
 additionalVolumeMounts: []
-  # -- For instance when using a logshipper for access logs
-  # - name: traefik-logs
-  #   mountPath: /var/log/traefik
+# - name: run-ejabberd
+#   mountPath: /usr/local/bin
 
 ingress:
   enabled: false
@@ -713,6 +726,14 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+
+
+# -- If hostNetwork is true, runs ejabberd in the host network namespace
+# To prevent unschedulabel pods due to port collisions, if hostNetwork=true
+# and replicas>1, a pod anti-affinity is recommended and will be set if the
+# affinity is left as default.
+hostNetwork: false
+
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

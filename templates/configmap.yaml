@@ -12,8 +12,11 @@ data:
     {{- toYaml .Values.hosts | nindent 6 }}
 
     # CA & tls certificates
+    acme:
+      auto: false
     ca_file: /opt/ejabberd/conf/cacert.pem
-    certfiles: {{ .Values.certFiles.path }}/*.pem
+    certfiles:
+      - {{ .Values.certFiles.path }}/*.pem
 
     # logging
     {{- toYaml .Values.logging | nindent 4 }}

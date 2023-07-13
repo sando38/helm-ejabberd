@@ -82,16 +82,12 @@
           hostIP: {{ $config.hostIP }}
           {{- end }}
           protocol: {{ default "TCP" $config.protocol | quote }}
-        {{- if $config.http3 }}
-        {{- if and $config.http3.enabled $config.hostPort }}
-        {{- $http3Port := default $config.hostPort $config.http3.advertisedPort }}
-        - name: "{{ $name }}-http3"
-          containerPort: {{ $config.port }}
-          hostPort: {{ $http3Port }}
-          protocol: UDP
         {{- end }}
         {{- end }}
-        {{- end }}
+        {{- if .Values.service.headless }}
+        - name: "erl-dist-port"
+          containerPort: {{ default 5210 .Values.service.headless.erlDistPort }}
+          protocol: "TCP"
         {{- end }}
         {{- with .Values.securityContext }}
         securityContext:
@@ -106,12 +102,6 @@
           - name: {{ include "ejabberd.fullname" . }}-config
             mountPath: /opt/ejabberd/conf/ejabberd.yml
             subPath: ejabberd.yml
-          {{- $root := . }}
-          {{- range .Values.volumes }}
-          - name: {{ tpl (.name) $root | replace "." "-" }}
-            mountPath: {{ .mountPath }}
-            readOnly: true
-          {{- end }}
           {{- if .Values.additionalVolumeMounts }}
             {{- toYaml .Values.additionalVolumeMounts | nindent 10 }}
           {{- end }}
@@ -149,16 +139,8 @@
             items:
             - key: ejabberd.yml
               path: ejabberd.yml
-        {{- $root := . }}
-        {{- range .Values.volumes }}
-        - name: {{ tpl (.name) $root | replace "." "-" }}
-          {{- if eq .type "secret" }}
-          secret:
-            secretName: {{ tpl (.name) $root }}
-          {{- else if eq .type "configMap" }}
-          configMap:
-            name: {{ tpl (.name) $root }}
-          {{- end }}
+        {{- if .Values.volumes }}
+          {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}
         {{- if .Values.statefulSet.additionalVolumes }}
           {{- toYaml .Values.statefulSet.additionalVolumes | nindent 8 }}

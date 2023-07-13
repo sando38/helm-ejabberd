@@ -32,7 +32,7 @@ info '  https://github.com/processone/docker-ejabberd/tree/master/ecs#change-mne
 pod_name="${POD_NAME:-$(hostname -s)}" # e.g. pod-0
 pod_svc_name="$(hostname -f)" # e.g. pod-0.servicename.namespace.svc.cluster.local
 headless_svc="${pod_svc_name/$pod_name./}" # e.g. servicename.namespace.default.svc.cluster.local
-svc_pod_names="$(nslookup -q=srv "$headless_svc" | grep "$headless_svc" | awk '{{print $NF}}')"
+svc_pod_names="$(nslookup -q=srv "$headless_svc" | grep "$headless_svc" | awk '{print $NF}')"
 cluster_pod_names="$(echo $svc_pod_names | sed -e "s|$pod_name.$headless_svc||g")"
 sts_name="$(echo $pod_name | sed 's|-[0-9]\+||g')"
 
@@ -45,7 +45,7 @@ else
     info 'ejabberd cluster detected ...'
     export join_pod_name="$(echo $cluster_pod_names | awk 'END{ print $1 }')"
     info "Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
-    if [ -z "$CTL_ON_START" ]
+    if [ -z "${CTL_ON_START-}" ]
     then export CTL_ON_START="join_cluster $sts_name@$join_pod_name"
     else export CTL_ON_START="join_cluster $sts_name@$join_pod_name ; $CTL_ON_START"
     fi

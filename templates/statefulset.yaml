@@ -14,6 +14,9 @@ metadata:
   {{- end }}
     reloader.stakater.com/auto: {{ .Values.reloader.enabled | quote }}
 spec:
+  {{- if .Values.service.headless }}
+  serviceName: {{ include "ejabberd.fullname" . }}-headless
+  {{- end }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ default 1 .Values.statefulSet.replicas }}
   {{- end }}
@@ -23,7 +26,7 @@ spec:
   selector:
     matchLabels:
       {{- include "ejabberd.selectorLabels" . | nindent 6 }}
-  strategy: {{ toYaml .Values.updateStrategy | nindent 4 }}
+  updateStrategy: {{ toYaml .Values.updateStrategy | nindent 4 }}
   minReadySeconds: {{ .Values.statefulSet.minReadySeconds }}
   template: {{ template "ejabberd.podTemplate" . }}
   {{- if and (not .Values.persistence.existingClaim)  .Values.persistence.enabled }}

@@ -1,0 +1,35 @@
+{{- if .Values.service.headless -}}
+
+{{- $fullname := include "ejabberd.fullname" . }}
+{{- if ge (len $fullname) 50 }}
+  {{- fail "ERROR: Cannot create an headless service when name contains more than 50 characters" }}
+{{- end }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname}}-headless
+  namespace: {{ template "ejabberd.namespace" . }}
+  {{- template "ejabberd.service-metadata" . }}
+  annotations:
+  {{- with .Values.service.headless.annotations }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  {{- with .Values.service.headless.spec }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  selector:
+    {{- include "ejabberd.selectorLabels" . | nindent 4 }}
+  ports:
+  - port: {{ default 5210 .Values.service.headless.erlDistPort }}
+    name: erl-dist-port
+    targetPort: erl-dist-port
+    protocol: TCP
+{{- end }}
+
+
+
