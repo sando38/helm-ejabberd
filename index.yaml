@@ -3,6 +3,30 @@ entries:
   ejabberd:
   - apiVersion: v2
     appVersion: 78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s2
+    created: "2023-07-14T22:46:11.781822942+02:00"
+    dependencies:
+    - condition: reloader.install
+      name: reloader
+      repository: https://stakater.github.io/stakater-charts
+      version: ~1.0.29
+    description: ejabberd XMPP server helm chart
+    digest: 500490f8d416b0845f73a2e85c9115fb1ce186be4b5e0c1e48e37de700971165
+    keywords:
+    - xmpp
+    - mqtt
+    - sip
+    - stun
+    - turn
+    maintainers:
+    - email: saarko@tutanota.com
+      name: saarko
+    name: ejabberd
+    type: application
+    urls:
+    - https://github.com/sando38/helm-ejabberd/releases/download/ejabberd-0.2.0/ejabberd-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s2
     created: "2023-07-13T21:46:54.275261672+02:00"
     dependencies:
     - condition: reloader.install
@@ -25,4 +49,4 @@ entries:
     urls:
     - https://sando38.github.io/helm-ejabberd/ejabberd-0.1.1.tgz
     version: 0.1.1
-generated: "2023-07-13T21:46:54.264752045+02:00"
+generated: "2023-07-14T22:46:11.782091921+02:00"
