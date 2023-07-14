@@ -49,7 +49,7 @@ certFiles:
 
 Deploy with:
 
-    helm install ejabberd ejabberd -f /path/to/minimal-config.yaml
+    helm install ejabberd ejabberd/ejabberd -f /path/to/minimal-config.yaml
 
 This will also deploy [reloader](https://github.com/stakater/Reloader) which is
 used to renew certificates mounted as secrets into the container. If you don't
