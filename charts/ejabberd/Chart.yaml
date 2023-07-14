@@ -10,10 +10,11 @@ keywords:
   - sip
   - stun
   - turn
+
 dependencies:
   - name: reloader
     repository: https://stakater.github.io/stakater-charts
-    version: 1.0.29
+    version: ~1.0.29
     condition: reloader.install
 
 maintainers:
