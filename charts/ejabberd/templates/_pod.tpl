@@ -102,6 +102,24 @@
           - name: {{ include "ejabberd.fullname" . }}-config
             mountPath: /opt/ejabberd/conf/ejabberd.yml
             subPath: ejabberd.yml
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf/modules-default.yml
+            subPath: modules-default.yml
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf/shaper.yml
+            subPath: shaper.yml
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf/shaper-rules.yml
+            subPath: shaper-rules.yml
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf/acl.yml
+            subPath: acl.yml
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf/api-permissions.yml
+            subPath: api-permissions.yml
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf/access-rules.yml
+            subPath: access-rules.yml
           {{- if .Values.additionalVolumeMounts }}
             {{- toYaml .Values.additionalVolumeMounts | nindent 10 }}
           {{- end }}
@@ -116,8 +134,14 @@
           - {{ . | quote }}
           {{- end }}
           {{- end }}
-        {{- with .Values.env }}
         env:
+          - name: ERLANG_COOKIE
+            value: {{ default "erlangCookie" .Values.erlangCookie }}
+        {{- if .Values.service.headless }}
+          - name: ERL_DIST_PORT
+            value: {{ default 5210 .Values.service.headless.erlDistPort | quote }}
+        {{- end }}
+        {{- with .Values.env }}
           {{- toYaml . | nindent 10 }}
         {{- end }}
         {{- with .Values.envFrom }}
@@ -127,24 +151,6 @@
       {{- if .Values.statefulSet.additionalContainers }}
         {{- toYaml .Values.statefulSet.additionalContainers | nindent 6 }}
       {{- end }}
-      volumes:
-        - name: {{ include "ejabberd.fullname" . }}-certs
-          secret:
-            secretName: {{ .Values.certFiles.secretName }}
-        - name: tmp
-          emptyDir: {}
-        - name: {{ include "ejabberd.fullname" . }}-config
-          configMap:
-            name: {{ include "ejabberd.fullname" . }}-config
-            items:
-            - key: ejabberd.yml
-              path: ejabberd.yml
-        {{- if .Values.volumes }}
-          {{- toYaml .Values.volumes | nindent 8 }}
-        {{- end }}
-        {{- if .Values.statefulSet.additionalVolumes }}
-          {{- toYaml .Values.statefulSet.additionalVolumes | nindent 8 }}
-        {{- end }}
       {{- if .Values.affinity }}
       affinity:
         {{- tpl (toYaml .Values.affinity) . | nindent 8 }}
@@ -171,4 +177,34 @@
       topologySpreadConstraints:
         {{- tpl (toYaml .Values.topologySpreadConstraints) . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: {{ include "ejabberd.fullname" . }}-certs
+          secret:
+            secretName: {{ .Values.certFiles.secretName }}
+        - name: tmp
+          emptyDir: {}
+        - name: {{ include "ejabberd.fullname" . }}-config
+          configMap:
+            name: {{ include "ejabberd.fullname" . }}-config
+            items:
+            - key: ejabberd.yml
+              path: ejabberd.yml
+            - key: modules-default.yml
+              path: modules-default.yml
+            - key: shaper.yml
+              path: shaper.yml
+            - key: shaper-rules.yml
+              path: shaper-rules.yml
+            - key: acl.yml
+              path: acl.yml
+            - key: api-permissions.yml
+              path: api-permissions.yml
+            - key: access-rules.yml
+              path: access-rules.yml
+        {{- if .Values.volumes }}
+          {{- toYaml .Values.volumes | nindent 8 }}
+        {{- end }}
+        {{- if .Values.statefulSet.additionalVolumes }}
+          {{- toYaml .Values.statefulSet.additionalVolumes | nindent 8 }}
+        {{- end }}
 {{ end -}}

@@ -16,7 +16,7 @@
 {{- end -}}
 
 {{- if (eq $exposedPorts false) -}}
-  {{- fail "You need to expose at least one port or set enabled=false to service" -}}
+  {{- fail "You need to define at least one listener in .Values.listen or set enabled=false to service" -}}
 {{- end -}}
 
 {{- if and $exposedPorts (or $tcpPorts .Values.service.single) }}

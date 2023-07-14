@@ -1,3 +1,9 @@
+{{- if (not .Values.listen) }}
+{{- fail "You need to define at least one listener in .Values.listen" -}}
+{{- else if (not .Values.certFiles.secretName) }}
+{{- fail "You need to define your TLS cert secretName in .Values.certFiles.secretName" -}}
+{{- end }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -29,7 +35,7 @@ spec:
   updateStrategy: {{ toYaml .Values.updateStrategy | nindent 4 }}
   minReadySeconds: {{ .Values.statefulSet.minReadySeconds }}
   template: {{ template "ejabberd.podTemplate" . }}
-  {{- if and (not .Values.persistence.existingClaim)  .Values.persistence.enabled }}
+  {{- if and (not .Values.persistence.existingClaim) .Values.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: mnesia
@@ -53,6 +59,6 @@ spec:
       {{- end }}
       {{- end }}
       {{- else if (not .Values.persistence.enabled) }}
-        - name: data
+        - name: mnesia
           emptyDir: {}
   {{- end }}

@@ -179,6 +179,11 @@ reloader:
   enabled: true
 
 #
+# Define the erlang cookie to be used for clustering
+#
+erlangCookie: "YouR-3rl4n6-C00k!3"
+
+#
 # ejabberd configuration
 # the following items represent the top-level options
 # https://docs.ejabberd.im/admin/configuration/toplevel
@@ -230,218 +235,215 @@ listenGlobal:
   #    https://docs.ejabberd.im/admin/configuration/toplevel/#s2s-access
   s2s_ciphers: TLS_CIPHERS
   s2s_protocol_options: TLS_OPTIONS
-  s2s_use_starttls: required
+  # s2s_use_starttls: required
   # -- HTTP(s) trusted proxies:
   #    https://docs.ejabberd.im/admin/configuration/toplevel/#trusted-proxies
   # trusted_proxies: all
 # -- The ejabberd specifics except port, transport are defined in
 # -- .Values.listen.NAME.options
 # -- https://docs.ejabberd.im/admin/configuration/listen/#listen-option
+#    NOTE:
+#    At least one `listen`er must be defined, so uncomment one, e.g. c2s
 listen:
-  c2s:
-    port: 5222
-    # hostPort: 5222
-    # containerPort: 5222
-    expose: true
-    exposedPort: 5222
-    ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # targetPort: 80
-    # The port protocol (TCP/UDP)
-    protocol: TCP
-    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # LoadBalancer.
-    # nodePort: 30222
-    # -- c2s top-level listener options:
-    #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
-    topLevelOptions:
-    # -- ejabberd listener options w/o port, transport:
-    #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    options:
-      ip: "::"
-      module: ejabberd_c2s
-      max_stanza_size: 262144
-      shaper: c2s_shaper
-      access: c2s
-      starttls_required: true
-  s2s:
-    port: 5269
-    # hostPort: 8000
-    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # containerPort: 8000
-    expose: true
-    exposedPort: 5269
-    ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # targetPort: 80
-    # The port protocol (TCP/UDP)
-    protocol: TCP
-    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # LoadBalancer.
-    # nodePort: 30269
-    # -- ejabberd listener options w/o port, transport:
-    #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    options:
-      ip: "::"
-      module: ejabberd_s2s_in
-      max_stanza_size: 524288
-  http:
-    port: 5280
-    # hostPort: 8000
-    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # containerPort: 8000
-    expose: false
-    exposedPort: 5280
-    ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # targetPort: 80
-    # The port protocol (TCP/UDP)
-    protocol: TCP
-    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # LoadBalancer.
-    # nodePort: 30269
-    # -- ejabberd listener options w/o port, transport:
-    #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    options:
-      ip: "::"
-      module: ejabberd_http
-      request_handlers:
-        /admin: ejabberd_web_admin
-        /.well-known/acme-challenge: ejabberd_acme
-  https:
-    port: 5443
-    # hostPort: 8000
-    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # containerPort: 8000
-    expose: true
-    exposedPort: 5443
-    ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # targetPort: 80
-    # The port protocol (TCP/UDP)
-    protocol: TCP
-    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # LoadBalancer.
-    # nodePort: 30269
-    # -- ejabberd listener options w/o port, transport:
-    #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    options:
-      ip: "::"
-      module: ejabberd_http
-      tls: true
-      request_handlers:
-        /admin: ejabberd_web_admin
-        /api: mod_http_api
-        /bosh: mod_bosh
-        /captcha: ejabberd_captcha
-        /upload: mod_http_upload
-        /ws: ejabberd_http_ws
-  stun:
-    port: 3478
-    # hostPort: 8000
-    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # containerPort: 8000
-    expose: true
-    exposedPort: 3478
-    ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # targetPort: 80
-    # The port protocol (TCP/UDP)
-    protocol: UDP
-    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # LoadBalancer.
-    # nodePort: 30269
-    # -- ejabberd listener options w/o port, transport:
-    #    https://docs.ejabberd.im/admin/configuration/listen/#ejabberd-stun-1
-    options:
-      ip: "::"
-      module: ejabberd_stun
-      use_turn: false
-      ## The server's public IPv4 address:
-      # turn_ipv4_address: "203.0.113.3"
-      ## The server's public IPv6 address:
-      # turn_ipv6_address: "2001:db8::3"
-
+  c2s: {}
+    # port: 5222
+    # # hostPort: 5222
+    # # containerPort: 5222
+    # expose: true
+    # exposedPort: 5222
+    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # # targetPort: 80
+    # # The port protocol (TCP/UDP)
+    # protocol: TCP
+    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # # LoadBalancer.
+    # # nodePort: 30222
+    # # -- c2s top-level listener options:
+    # #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
+    # options:
+    #   ip: "::"
+    #   module: ejabberd_c2s
+    #   max_stanza_size: 262144
+    #   shaper: c2s_shaper
+    #   access: c2s
+    #   starttls_required: true
+  s2s: {}
+    # port: 5269
+    # # hostPort: 8000
+    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # # containerPort: 8000
+    # expose: true
+    # exposedPort: 5269
+    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # # targetPort: 80
+    # # The port protocol (TCP/UDP)
+    # protocol: TCP
+    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # # LoadBalancer.
+    # # nodePort: 30269
+    # # -- ejabberd listener options w/o port, transport:
+    # #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    # options:
+    #   ip: "::"
+    #   module: ejabberd_s2s_in
+    #   max_stanza_size: 524288
+  http: {}
+    # port: 5280
+    # # hostPort: 8000
+    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # # containerPort: 8000
+    # expose: false
+    # exposedPort: 5280
+    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # # targetPort: 80
+    # # The port protocol (TCP/UDP)
+    # protocol: TCP
+    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # # LoadBalancer.
+    # # nodePort: 30269
+    # # -- ejabberd listener options w/o port, transport:
+    # #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    # options:
+    #   ip: "::"
+    #   module: ejabberd_http
+    #   request_handlers:
+    #     /admin: ejabberd_web_admin
+  https: {}
+    # port: 5443
+    # # hostPort: 8000
+    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # # containerPort: 8000
+    # expose: true
+    # exposedPort: 5443
+    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # # targetPort: 80
+    # # The port protocol (TCP/UDP)
+    # protocol: TCP
+    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # # LoadBalancer.
+    # # nodePort: 30269
+    # # -- ejabberd listener options w/o port, transport:
+    # #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    # options:
+    #   ip: "::"
+    #   module: ejabberd_http
+    #   tls: true
+    #   request_handlers:
+    #     /admin: ejabberd_web_admin
+    #     /api: mod_http_api
+    #     /bosh: mod_bosh
+    #     /captcha: ejabberd_captcha
+    #     /upload: mod_http_upload
+    #     /ws: ejabberd_http_ws
+  stun: {}
+    # port: 3478
+    # # hostPort: 8000
+    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # # containerPort: 8000
+    # expose: true
+    # exposedPort: 3478
+    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # # targetPort: 80
+    # # The port protocol (TCP/UDP)
+    # protocol: UDP
+    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # # LoadBalancer.
+    # # nodePort: 30269
+    # # -- ejabberd listener options w/o port, transport:
+    # #    https://docs.ejabberd.im/admin/configuration/listen/#ejabberd-stun-1
+    # options:
+    #   ip: "::"
+    #   module: ejabberd_stun
+    #   use_turn: false
+    #   ## The server's public IPv4 address:
+    #   # turn_ipv4_address: "203.0.113.3"
+    #   ## The server's public IPv6 address:
+    #   # turn_ipv6_address: "2001:db8::3"
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#acl
 #
-acl:
-  local:
-    user_regexp: ""
-  loopback:
-    ip:
-      - 127.0.0.0/8
-      - ::1/128
+acl: {}
+  # local:
+  #   user_regexp: ""
+  # loopback:
+  #   ip:
+  #     - 127.0.0.0/8
+  #     - ::1/128
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#access-rules
 #
-accessRules:
-  local:
-    allow: local
-  c2s:
-    deny: blocked
-    allow: all
-  announce:
-    allow: admin
-  configure:
-    allow: admin
-  muc_create:
-    allow: local
-  pubsub_createnode:
-    allow: local
-  trusted_network:
-    allow: loopback
+accessRules: {}
+  # local:
+  #   allow: local
+  # c2s:
+  #   deny: blocked
+  #   allow: all
+  # announce:
+  #   allow: admin
+  # configure:
+  #   allow: admin
+  # muc_create:
+  #   allow: local
+  # pubsub_createnode:
+  #   allow: local
+  # trusted_network:
+  #   allow: loopback
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#api-permissions
 #
-apiPermissions:
-  "console commands":
-    from:
-      - ejabberd_ctl
-    who: all
-    what: "*"
-  "admin access":
-    who:
-      access:
-        allow:
-          - acl: loopback
-          - acl: admin
-      oauth:
-        scope: "ejabberd:admin"
-        access:
-          allow:
-            - acl: loopback
-            - acl: admin
-    what:
-      - "*"
-      - "!stop"
-      - "!start"
-  "public commands":
-    who:
-      ip: 127.0.0.1/8
-    what:
-      - status
-      - connected_users_number
+apiPermissions: {}
+  # "console commands":
+  #   from:
+  #     - ejabberd_ctl
+  #   who: all
+  #   what: "*"
+  # "admin access":
+  #   who:
+  #     access:
+  #       allow:
+  #         - acl: loopback
+  #         - acl: admin
+  #     oauth:
+  #       scope: "ejabberd:admin"
+  #       access:
+  #         allow:
+  #           - acl: loopback
+  #           - acl: admin
+  #   what:
+  #     - "*"
+  #     - "!stop"
+  #     - "!start"
+  # "public commands":
+  #   who:
+  #     ip: 127.0.0.1/8
+  #   what:
+  #     - status
+  #     - connected_users_number
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#shaper
 #
-shaper:
-  normal:
-    rate: 3000
-    burst_size: 20000
-  fast: 100000
+shaper: {}
+  # normal:
+  #   rate: 3000
+  #   burst_size: 20000
+  # fast: 100000
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#shaper-rules
 #
-shaperRules:
-  max_user_sessions: 10
-  max_user_offline_messages:
-    5000: admin
-    100: all
-  c2s_shaper:
-    none: admin
-    normal: all
-  s2s_shaper: fast
+shaperRules: {}
+  # max_user_sessions: 10
+  # max_user_offline_messages:
+  #   5000: admin
+  #   100: all
+  # c2s_shaper:
+  #   none: admin
+  #   normal: all
+  # s2s_shaper: fast
 
 
 #
@@ -467,119 +469,120 @@ installContribModules: {}
 #
 # ejabberd modules
 #
-modules:
-  mod_adhoc: {}
-  mod_admin_extra: {}
-  mod_announce:
-    access: announce
-  mod_avatar: {}
-  mod_blocking: {}
-  mod_bosh: {}
-  mod_caps: {}
-  mod_carboncopy: {}
-  mod_client_state: {}
-  mod_configure: {}
-  mod_disco: {}
-  mod_fail2ban: {}
-  mod_http_api: {}
-  mod_http_upload:
-    put_url: https://@HOST@:5443/upload
-    custom_headers:
-      "Access-Control-Allow-Origin": "https://@HOST@"
-      "Access-Control-Allow-Methods": "GET,HEAD,PUT,OPTIONS"
-      "Access-Control-Allow-Headers": "Content-Type"
-  mod_last: {}
-  mod_mam:
-    ## Mnesia is limited to 2GB, better to use an SQL backend
-    ## For small servers SQLite is a good fit and is very easy
-    ## to configure. Uncomment this when you have SQL configured:
-    ## db_type: sql
-    assume_mam_usage: true
-    default: always
-  mod_mqtt: {}
-  mod_muc:
-    access:
-      - allow
-    access_admin:
-      - allow: admin
-    access_create: muc_create
-    access_persistent: muc_create
-    access_mam:
-      - allow
-    default_room_options:
-      mam: true
-  mod_muc_admin: {}
-  mod_offline:
-    access_max_user_messages: max_user_offline_messages
-  mod_ping: {}
-  mod_privacy: {}
-  mod_private: {}
-  mod_proxy65:
-    access: local
-    max_connections: 5
-  mod_pubsub:
-    access_createnode: pubsub_createnode
-    plugins:
-      - flat
-      - pep
-    force_node_config:
-      ## Avoid buggy clients to make their bookmarks public
-      storage:bookmarks:
-        access_model: whitelist
-  mod_push: {}
-  mod_push_keepalive: {}
-  mod_register:
-    ## Only accept registration requests from the "trusted"
-    ## network (see access_rules section above).
-    ## Think twice before enabling registration from any
-    ## address. See the Jabber SPAM Manifesto for details:
-    ## https://github.com/ge0rg/jabber-spam-fighting-manifesto
-    ip_access: trusted_network
-  mod_roster:
-    versioning: true
-  mod_s2s_dialback: {}
-  mod_shared_roster: {}
-  mod_stream_mgmt:
-    resend_on_timeout: if_offline
-  mod_stun_disco: {}
-  mod_vcard: {}
-  mod_vcard_xupdate: {}
-  mod_version:
-    show_os: false
+# -- the commented modules are the defaults
+#    if you want to customize, you need to specifiy all modules you want to use
+#    below including additional non-default modules.
+modules: {}
+  # mod_adhoc: {}
+  # mod_admin_extra: {}
+  # mod_announce:
+  #   access: announce
+  # mod_avatar: {}
+  # mod_blocking: {}
+  # mod_bosh: {}
+  # mod_caps: {}
+  # mod_carboncopy: {}
+  # mod_client_state: {}
+  # mod_configure: {}
+  # mod_disco: {}
+  # mod_fail2ban: {}
+  # mod_http_api: {}
+  # mod_http_upload:
+  #   put_url: https://@HOST@:5443/upload
+  #   custom_headers:
+  #     "Access-Control-Allow-Origin": "https://@HOST@"
+  #     "Access-Control-Allow-Methods": "GET,HEAD,PUT,OPTIONS"
+  #     "Access-Control-Allow-Headers": "Content-Type"
+  # mod_last: {}
+  # mod_mam:
+  #   ## Mnesia is limited to 2GB, better to use an SQL backend
+  #   ## For small servers SQLite is a good fit and is very easy
+  #   ## to configure. Uncomment this when you have SQL configured:
+  #   ## db_type: sql
+  #   assume_mam_usage: true
+  #   default: always
+  # mod_mqtt: {}
+  # mod_muc:
+  #   access:
+  #     - allow
+  #   access_admin:
+  #     - allow: admin
+  #   access_create: muc_create
+  #   access_persistent: muc_create
+  #   access_mam:
+  #     - allow
+  #   default_room_options:
+  #     mam: true
+  # mod_muc_admin: {}
+  # mod_offline:
+  #   access_max_user_messages: max_user_offline_messages
+  # mod_ping: {}
+  # mod_privacy: {}
+  # mod_private: {}
+  # mod_proxy65:
+  #   access: local
+  #   max_connections: 5
+  # mod_pubsub:
+  #   access_createnode: pubsub_createnode
+  #   plugins:
+  #     - flat
+  #     - pep
+  #   force_node_config:
+  #     ## Avoid buggy clients to make their bookmarks public
+  #     storage:bookmarks:
+  #       access_model: whitelist
+  # mod_push: {}
+  # mod_push_keepalive: {}
+  # mod_register:
+  #   ## Only accept registration requests from the "trusted"
+  #   ## network (see access_rules section above).
+  #   ## Think twice before enabling registration from any
+  #   ## address. See the Jabber SPAM Manifesto for details:
+  #   ## https://github.com/ge0rg/jabber-spam-fighting-manifesto
+  #   ip_access: trusted_network
+  # mod_roster:
+  #   versioning: true
+  # mod_s2s_dialback: {}
+  # mod_shared_roster: {}
+  # mod_stream_mgmt:
+  #   resend_on_timeout: if_offline
+  # mod_stun_disco: {}
+  # mod_vcard: {}
+  # mod_vcard_xupdate: {}
+  # mod_version:
+  #   show_os: false
 
 #
 # Authentification method
 #
-authentification:
+authentification: {}
   # https://docs.ejabberd.im/admin/configuration/authentication/
   # more options here:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#auth-cache-life-time
   # -- if you want to use LDAP, etc. you also need to enable the respective
   #    modules below, e.g. .Values.ldap.enabled or .Values.sqlDatabase.enabled
-  auth_method:
-    - internal
-  auth_password_format: scram
+  # auth_method:
+  #  - mnesia
+  # auth_password_format: scram
   # auth_scram_hash: sha256
 
 #
 # LDAP configuration:
 # https://docs.ejabberd.im/admin/configuration/ldap/
-ldap:
-  enabled: false
+ldap: {}
   # Variables can be found here:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#ldap-backups
-  config:
-    ## DNS name of our LDAP server
-    ldap_servers: [ldap.example.org]
-    ## Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
-    ldap_rootdn: "cn=Manager,dc=example,dc=org"
-    ldap_password: secret
-    ldap_encrypt: tls
-    ldap_port: 6123
-    ## Define the user's base
-    ldap_base: "ou=Users,dc=example,dc=org"
-    ## We want to authorize users from 'shadowAccount' object class only
-    ldap_filter: "(objectClass=shadowAccount)"
+  #  -- DNS name of our LDAP server
+  # ldap_servers: [ldap.example.org]
+  # -- Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
+  # ldap_rootdn: "cn=Manager,dc=example,dc=org"
+  # ldap_password: secret
+  # ldap_encrypt: tls
+  # ldap_port: 6123
+  # -- Define the user's base
+  # ldap_base: "ou=Users,dc=example,dc=org"
+  # -- We want to authorize users from 'shadowAccount' object class only
+  # ldap_filter: "(objectClass=shadowAccount)"
 
 #
 # Database configuration
@@ -592,14 +595,14 @@ sqlDatabase:
   newSqlSchema: false
   # Variables can be found here:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#sql-connect-timeout
-  config:
-    sql_type: pgsql
-    sql_server: pgsql
-    sql_port: 5432
-    sql_ssl: false
-    sql_database: ejabberd
-    sql_username: ejabberd
-    sql_password: ejabberd
+  config: {}
+    # sql_type: pgsql
+    # sql_server: pgsql
+    # sql_port: 5432
+    # sql_ssl: false
+    # sql_database: ejabberd
+    # sql_username: ejabberd
+    # sql_password: ejabberd
 
 #
 # redis configuration:
@@ -610,10 +613,10 @@ redis:
   defaultRamDb: redis
   # Variables can be found here:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#redis-connect-timeout
-  config:
-    redis_server: redis
-    redis_port: 6379
-    redis_db: 1
+  config: {}
+    # redis_server: redis
+    # redis_port: 6379
+    # redis_db: 1
     # redis_password: redis
     # redis_pool_size:
     # redis_queue_type:
@@ -640,10 +643,8 @@ additonalConfigurationItems: {}
   # language: "en"
 
 # -- Environment variables to be passed to ejabberd
-env:
+env: []
 # -- for clustering, the erlang.cookie is needed
-- name: ERLANG_COOKIE
-  value: YouR-3rl4n6-C00k!3
 # - name: CTL_ON_CREATE
 #   value: "register admin localhost asd"
 # - name: CTL_ON_START
@@ -673,7 +674,7 @@ envFrom: []
 #  It is strongly recommended to use a sql database, see: .Values.sqlDatabase
 #
 persistence:
-  enabled: true
+  enabled: false
   ## database data Persistent Volume Storage Class
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning

@@ -45,6 +45,13 @@ hosts:
   - example.com
 certFiles:
   secretName: "examplecom-tls"
+listen:
+  c2s:
+    port: 5222
+    expose: true
+    options:
+      ip: "::"
+      module: ejabberd_c2s
 ```
 
 Deploy with:
