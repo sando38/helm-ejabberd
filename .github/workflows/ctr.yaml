@@ -1,0 +1,102 @@
+name: Build & publish ejabberd ctr image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'image/tag'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'type yes - no publishing ...'
+        required: true
+env:
+  REGISTRY: "ghcr.io"
+  IMAGE_NAME: "sando38/ejabberd"
+  PATCH_DIR: "image"
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Extract container image tag
+        run: |
+          echo "TAG=$(awk 'END{print}' ${{ env.PATCH_DIR }}/tag)" >> $GITHUB_ENV
+          echo "REF=$(awk 'END{gsub("-", " "); print $1}' ${{ env.PATCH_DIR }}/tag)" >> $GITHUB_ENV
+
+      - name: Checkout ejabberd source code
+        uses: actions/checkout@v3
+        with:
+          repository: processone/ejabberd
+          path: ejabberd-source
+          ref: ${{ env.REF }}
+
+      - name: Patch source code and prepare build context
+        working-directory: ./ejabberd-source
+        run: |
+          git apply ../image/${{ env.REF }}/patches/*.patch
+          mkdir ./k8s-scripts
+          cp -r ../image/${{ env.REF }}/scripts/* ./k8s-scripts
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            ${{ env.TAG }}
+
+      - name: Build linux/amd64 image
+        uses: docker/build-push-action@v3
+        with:
+          build-args: |
+            METHOD=direct
+            VERSION=${{ env.TAG }}
+            VARIANT=hardened
+          context: ./ejabberd-source/.
+          file: ./ejabberd-source/.github/container/Dockerfile
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Smoke Test
+        run: |
+          docker run --rm -d --name ejabberd \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+          docker exec ejabberd ejabberdctl started
+          docker exec ejabberd ejabberdctl status
+          docker stop ejabberd
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.EJABBERD_REPO_TOKEN }}
+
+      - name: Push linux/amd64 image
+        uses: docker/build-push-action@v3
+        if: github.event_name == 'push'
+        with:
+          build-args: |
+            METHOD=direct
+            VERSION=${{ env.TAG }}
+            VARIANT=hardened
+          context: ./ejabberd-source/.
+          file: ./ejabberd-source/.github/container/Dockerfile
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
