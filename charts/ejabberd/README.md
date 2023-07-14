@@ -55,6 +55,24 @@ This will also deploy [reloader](https://github.com/stakater/Reloader) which is
 used to renew certificates mounted as secrets into the container. If you don't
 want this, you can disable it in `.Values.reloader`.
 
+### Interacting with the statefulset
+
+You can interact with the statefulset by using e.g. `kubectl`:
+
+```shell
+kubectl exec statefulset/ejabberd -- ejabberdctl status
+kubectl exec statefulset/ejabberd -- ejabberdctl register user example.com pass
+kubectl exec statefulset/ejabberd -- ejabberdctl list_cluster
+```
+
+### Connecting with an XMPP account
+
+On default, ejabberd's services are exposed with a `LoadBalancer`, hence you can
+reach your server on port `5222` under your specified domain in `.Values.hosts`.
+
+Alternatively, use the (public) IP address to connect with your XMPP client and
+the corresponding user account. If you use `NodePort` you need to connect with
+the exposed nodeport, which may be defined in `.Values.listen.c2s.nodePort`.
 
 ## Configuration items
 
