@@ -11,6 +11,11 @@ spec:
   containers:
     - name: wget
       image: busybox
-      command: ['wget']
-      args: ['{{ include "ejabberd.fullname" . }}:{{ .Values.service.port }}']
+      command: ["/bin/sh", "-c"]
+      args:
+        - >-
+          echo '>> sleep shortly to wait until the service is up' ;
+          sleep 20s ;
+          echo '>> starting HTTP test connection' ;
+          wget -O - --no-check-certificate https://ejabberd:5443/bosh
   restartPolicy: Never
