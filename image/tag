@@ -1,5 +1,0 @@
-# xx.xx specifies the ejabberd release
-# -k8sX specifies the image release, new releases have a higher ordinal number
-# changes in this file trigger a rebuild of the container image
-
-78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s2
