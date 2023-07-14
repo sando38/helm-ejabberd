@@ -231,9 +231,12 @@ listenGlobal:
   s2s_ciphers: TLS_CIPHERS
   s2s_protocol_options: TLS_OPTIONS
   s2s_use_starttls: required
+  # -- HTTP(s) trusted proxies:
+  #    https://docs.ejabberd.im/admin/configuration/toplevel/#trusted-proxies
+  # trusted_proxies: all
 # -- The ejabberd specifics except port, transport are defined in
 # -- .Values.listen.NAME.options
-# -- https://docs.ejabberd.im/admin/configuration/listen-options/
+# -- https://docs.ejabberd.im/admin/configuration/listen/#listen-option
 listen:
   c2s:
     port: 5222
@@ -344,7 +347,7 @@ listen:
     # LoadBalancer.
     # nodePort: 30269
     # -- ejabberd listener options w/o port, transport:
-    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    #    https://docs.ejabberd.im/admin/configuration/listen/#ejabberd-stun-1
     options:
       ip: "::"
       module: ejabberd_stun
