@@ -36,6 +36,7 @@
 {{- define "ejabberd.service-internal-ports" }}
   {{- range $name, $config := . }}
   {{- if $config }}
+  {{- if $config.enabled }}
   {{- if not (eq (toString $config.expose) `"false"`) }}
   - port: {{ default $config.port $config.exposedPort }}
     name: {{ $name | quote }}
@@ -44,6 +45,7 @@
     {{- if $config.nodePort }}
     nodePort: {{ $config.nodePort }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}

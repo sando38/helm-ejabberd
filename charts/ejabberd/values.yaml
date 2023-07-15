@@ -245,116 +245,121 @@ listenGlobal:
 #    NOTE:
 #    At least one `listen`er must be defined, so uncomment one, e.g. c2s
 listen:
-  c2s: {}
-    # port: 5222
+  c2s:
+    enabled: true
+    port: 5222
     # # hostPort: 5222
     # # containerPort: 5222
-    # expose: true
-    # exposedPort: 5222
+    expose: true
+    exposedPort: 5222
     # ## -- Different target ejabberd port on the cluster, useful for IP type LB
     # # targetPort: 80
     # # The port protocol (TCP/UDP)
-    # protocol: TCP
+    protocol: TCP
     # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
     # # LoadBalancer.
     # # nodePort: 30222
     # # -- c2s top-level listener options:
     # #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
-    # options:
-    #   ip: "::"
-    #   module: ejabberd_c2s
+    options:
+      ip: "::"
+      module: ejabberd_c2s
     #   max_stanza_size: 262144
     #   shaper: c2s_shaper
     #   access: c2s
     #   starttls_required: true
-  s2s: {}
-    # port: 5269
-    # # hostPort: 8000
-    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # # containerPort: 8000
-    # expose: true
-    # exposedPort: 5269
-    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # # targetPort: 80
-    # # The port protocol (TCP/UDP)
-    # protocol: TCP
-    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # # LoadBalancer.
-    # # nodePort: 30269
-    # # -- ejabberd listener options w/o port, transport:
-    # #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    # options:
-    #   ip: "::"
-    #   module: ejabberd_s2s_in
+  s2s:
+    enabled: true
+    port: 5269
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: true
+    exposedPort: 5269
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_s2s_in
     #   max_stanza_size: 524288
-  http: {}
-    # port: 5280
-    # # hostPort: 8000
-    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # # containerPort: 8000
-    # expose: false
-    # exposedPort: 5280
-    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # # targetPort: 80
-    # # The port protocol (TCP/UDP)
-    # protocol: TCP
-    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # # LoadBalancer.
-    # # nodePort: 30269
-    # # -- ejabberd listener options w/o port, transport:
-    # #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    # options:
-    #   ip: "::"
-    #   module: ejabberd_http
-    #   request_handlers:
-    #     /admin: ejabberd_web_admin
-  https: {}
-    # port: 5443
-    # # hostPort: 8000
-    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # # containerPort: 8000
-    # expose: true
-    # exposedPort: 5443
-    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # # targetPort: 80
-    # # The port protocol (TCP/UDP)
-    # protocol: TCP
-    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # # LoadBalancer.
-    # # nodePort: 30269
-    # # -- ejabberd listener options w/o port, transport:
-    # #    https://docs.ejabberd.im/admin/configuration/listen-options/
-    # options:
-    #   ip: "::"
-    #   module: ejabberd_http
-    #   tls: true
-    #   request_handlers:
-    #     /admin: ejabberd_web_admin
-    #     /api: mod_http_api
-    #     /bosh: mod_bosh
-    #     /captcha: ejabberd_captcha
-    #     /upload: mod_http_upload
-    #     /ws: ejabberd_http_ws
-  stun: {}
-    # port: 3478
-    # # hostPort: 8000
-    # ## -- defaults to port, must correspond to ports defined in ejabberd.listen
-    # # containerPort: 8000
-    # expose: true
-    # exposedPort: 3478
-    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # # targetPort: 80
-    # # The port protocol (TCP/UDP)
-    # protocol: UDP
-    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # # LoadBalancer.
-    # # nodePort: 30269
-    # # -- ejabberd listener options w/o port, transport:
-    # #    https://docs.ejabberd.im/admin/configuration/listen/#ejabberd-stun-1
-    # options:
-    #   ip: "::"
-    #   module: ejabberd_stun
-    #   use_turn: false
+  http:
+    enabled: true
+    port: 5280
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: false
+    exposedPort: 5280
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_http
+      request_handlers: {}
+        # /admin: ejabberd_web_admin
+  https:
+    enabled: true
+    port: 5443
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: true
+    exposedPort: 5443
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: TCP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
+    options:
+      ip: "::"
+      module: ejabberd_http
+      tls: true
+      request_handlers: {}
+        # /admin: ejabberd_web_admin
+        # /api: mod_http_api
+        # /bosh: mod_bosh
+        # /captcha: ejabberd_captcha
+        # /upload: mod_http_upload
+        # /ws: ejabberd_http_ws
+  stun:
+    enabled: true
+    port: 3478
+    # hostPort: 8000
+    ## -- defaults to port, must correspond to ports defined in ejabberd.listen
+    # containerPort: 8000
+    expose: true
+    exposedPort: 3478
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
+    protocol: UDP
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30269
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen/#ejabberd-stun-1
+    options:
+      ip: "::"
+      module: ejabberd_stun
+      use_turn: false
     #   ## The server's public IPv4 address:
     #   # turn_ipv4_address: "203.0.113.3"
     #   ## The server's public IPv6 address:
@@ -719,9 +724,9 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: ejabberd.local
+    - host: ejabberd-internal
       paths:
-        - path: /
+        - path: /upload
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls

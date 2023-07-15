@@ -173,10 +173,12 @@ data:
     listen:
     {{- range $name, $config := .Values.listen }}
     {{- if $config }}
+    {{- if $config.enabled }}
       -
         port: {{ default $config.port $config.containerPort }}
         transport: {{ default "TCP" $config.protocol | lower | quote }}
     {{- toYaml $config.options | nindent 8 }}
+    {{- end }}
     {{- end }}
     {{- end }}
 

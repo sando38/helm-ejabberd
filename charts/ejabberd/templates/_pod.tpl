@@ -68,6 +68,7 @@
         {{- $hostNetwork := .Values.hostNetwork }}
         {{- range $name, $config := .Values.listen }}
         {{- if $config }}
+        {{- if $config.enabled }}
           {{- if and $hostNetwork (and $config.hostPort $config.port) }}
             {{- if ne ($config.hostPort | int) ($config.port | int) }}
               {{- fail "ERROR: All hostPort must match their respective containerPort when `hostNetwork` is enabled" }}
@@ -82,6 +83,7 @@
           hostIP: {{ $config.hostIP }}
           {{- end }}
           protocol: {{ default "TCP" $config.protocol | quote }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.service.headless }}

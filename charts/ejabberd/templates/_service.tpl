@@ -38,6 +38,7 @@
 
 {{- define "ejabberd.service-ports" }}
   {{- range $name, $config := . }}
+  {{- if $config.enabled }}
   {{- if $config.expose }}
   - port: {{ default $config.port $config.exposedPort }}
     name: {{ $name | quote }}
@@ -49,6 +50,7 @@
     {{- if $config.appProtocol }}
     appProtocol: {{ $config.appProtocol }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}

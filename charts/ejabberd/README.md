@@ -45,13 +45,6 @@ hosts:
   - example.com
 certFiles:
   secretName: "examplecom-tls"
-listen:
-  c2s:
-    port: 5222
-    expose: true
-    options:
-      ip: "::"
-      module: ejabberd_c2s
 ```
 
 Deploy with:
@@ -61,6 +54,11 @@ Deploy with:
 This will also deploy [reloader](https://github.com/stakater/Reloader) which is
 used to renew certificates mounted as secrets into the container. If you don't
 want this, you can disable it in `.Values.reloader`.
+
+Note: This will deploy ejabberd's HTTP listener as well, however, currently no
+default [request_handler](https://docs.ejabberd.im/admin/configuration/listen-options/#request-handlers)
+is configured. Therefore, please configure one in `.Values.https.options` to use
+the HTTP service.
 
 ### Interacting with the statefulset
 
