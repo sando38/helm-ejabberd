@@ -51,15 +51,23 @@
           {{- toYaml . | nindent 10 }}
           {{- end }}
         readinessProbe:
+          {{- if .Values.statefulSet.readinessProbe }}
+          {{- toYaml .Values.statefulSet.readinessProbe | nindent 10 }}
+          {{- else }}
           tcpSocket:
-            port: {{ .Values.listen.c2s.port }}
+            port: {{ default .Values.listen.c2s.port .Values.healthCheck.tcpPort }}
           initialDelaySeconds: 10
           periodSeconds: 10
+          {{- end }}
         livenessProbe:
+          {{- if .Values.statefulSet.livenessProbe }}
+          {{- toYaml .Values.statefulSet.livenessProbe | nindent 10 }}
+          {{- else }}
           tcpSocket:
-            port: {{ .Values.listen.c2s.port }}
+            port:  {{ default .Values.listen.c2s.port .Values.healthCheck.tcpPort }}
           initialDelaySeconds: 10
           periodSeconds: 10
+          {{- end }}
         lifecycle:
           {{- with .Values.statefulSet.lifecycle }}
           {{- toYaml . | nindent 10 }}

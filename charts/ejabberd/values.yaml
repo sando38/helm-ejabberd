@@ -89,6 +89,24 @@ statefulSet:
     #     port: 5222
     #     host: localhost
     #     scheme: HTTP
+  readinessProbe: {}
+    # tcpSocket:
+    #   port: 5210
+    # initialDelaySeconds: 5
+    # periodSeconds: 5
+  livenessProbe: {}
+    # tcpSocket:
+    #   port: 5210
+    # initialDelaySeconds: 5
+    # periodSeconds: 5
+
+#
+# Override the default healthCheck port `.Values.listen.c2s.port`
+# -- Value is ignored if `.Values.statefulSet.readinessProbe` or
+#    `.Values.statefulSet.livenessProbe` is defined
+#
+healthCheck: {}
+  # tcpPort: 5210
 
 serviceAccount:
   # Specifies whether a service account should be created
