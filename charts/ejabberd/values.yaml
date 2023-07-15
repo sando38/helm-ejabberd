@@ -248,26 +248,26 @@ listen:
   c2s:
     enabled: true
     port: 5222
-    # # hostPort: 5222
-    # # containerPort: 5222
+    # hostPort: 5222
+    # containerPort: 5222
     expose: true
     exposedPort: 5222
-    # ## -- Different target ejabberd port on the cluster, useful for IP type LB
-    # # targetPort: 80
-    # # The port protocol (TCP/UDP)
+    ## -- Different target ejabberd port on the cluster, useful for IP type LB
+    # targetPort: 80
+    # The port protocol (TCP/UDP)
     protocol: TCP
-    # # -- Use nodeport if set. This is useful if you have configured ejabberd in a
-    # # LoadBalancer.
-    # # nodePort: 30222
-    # # -- c2s top-level listener options:
-    # #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
+    # -- Use nodeport if set. This is useful if you have configured ejabberd in a
+    # LoadBalancer.
+    # nodePort: 30222
+    # -- c2s top-level listener options:
+    #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
     options:
       ip: "::"
       module: ejabberd_c2s
-    #   max_stanza_size: 262144
-    #   shaper: c2s_shaper
-    #   access: c2s
-    #   starttls_required: true
+      # max_stanza_size: 262144
+      # shaper: c2s_shaper
+      # access: c2s
+      # starttls_required: true
   s2s:
     enabled: true
     port: 5269
@@ -288,7 +288,7 @@ listen:
     options:
       ip: "::"
       module: ejabberd_s2s_in
-    #   max_stanza_size: 524288
+      # max_stanza_size: 524288
   http:
     enabled: true
     port: 5280
@@ -360,10 +360,10 @@ listen:
       ip: "::"
       module: ejabberd_stun
       use_turn: false
-    #   ## The server's public IPv4 address:
-    #   # turn_ipv4_address: "203.0.113.3"
-    #   ## The server's public IPv6 address:
-    #   # turn_ipv6_address: "2001:db8::3"
+      ## The server's public IPv4 address:
+      # turn_ipv4_address: "203.0.113.3"
+      ## The server's public IPv6 address:
+      # turn_ipv6_address: "2001:db8::3"
 
 #
 # https://docs.ejabberd.im/admin/configuration/toplevel/#acl
