@@ -105,7 +105,7 @@
         {{- end }}
         volumeMounts:
         {{- range $name := .Values.certFiles.secretName }}
-          - name: ejabberd-certs-{{ $name }}
+          - name: ejabberd-certs-{{ $name | replace "." "-" }}
             mountPath: /opt/ejabberd/certs/{{ $name }}
             readOnly: true
         {{- end }}
@@ -191,7 +191,7 @@
       {{- end }}
       volumes:
         {{- range $name := .Values.certFiles.secretName }}
-        - name: ejabberd-certs-{{ $name }}
+        - name: ejabberd-certs-{{ $name | replace "." "-" }}
           secret:
             secretName: {{ $name }}
         {{- end }}
