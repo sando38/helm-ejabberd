@@ -216,9 +216,9 @@ hosts:
 certFiles:
   # -- Please specify your kubernetes secret containing the tls certificates for
   # the domains specified in .Values.hosts, otherwise the service will not work
-  secretName: ""
-  # -- can usually be left as is
-  path: "/opt/ejabberd/certs"
+  secretName:
+    - tls-secret-for-localhost
+    # - another-secret-for-another-domain
 
 #
 # global macros for reuse in the configuration

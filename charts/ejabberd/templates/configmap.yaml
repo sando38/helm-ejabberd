@@ -159,7 +159,9 @@ data:
       auto: false
     ca_file: /opt/ejabberd/conf/cacert.pem
     certfiles:
-      - {{ .Values.certFiles.path }}/*.pem
+    {{- range $name := .Values.certFiles.secretName }}
+      - /opt/ejabberd/certs/{{ $name }}/*.pem
+    {{- end }}
 
     {{- toYaml .Values.logging | nindent 4 }}
 

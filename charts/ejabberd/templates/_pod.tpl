@@ -104,9 +104,11 @@
           {{- toYaml . | nindent 10 }}
         {{- end }}
         volumeMounts:
-          - name: {{ include "ejabberd.fullname" . }}-certs
-            mountPath: {{ .Values.certFiles.path }}
+        {{- range $name := .Values.certFiles.secretName }}
+          - name: ejabberd-certs-{{ $name }}
+            mountPath: /opt/ejabberd/certs/{{ $name }}
             readOnly: true
+        {{- end }}
           - name: mnesia
             mountPath: /opt/ejabberd/database
           - name: {{ include "ejabberd.fullname" . }}-config
@@ -188,9 +190,11 @@
         {{- tpl (toYaml .Values.topologySpreadConstraints) . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: {{ include "ejabberd.fullname" . }}-certs
+        {{- range $name := .Values.certFiles.secretName }}
+        - name: ejabberd-certs-{{ $name }}
           secret:
-            secretName: {{ .Values.certFiles.secretName }}
+            secretName: {{ $name }}
+        {{- end }}
         - name: tmp
           emptyDir: {}
         - name: {{ include "ejabberd.fullname" . }}-config
