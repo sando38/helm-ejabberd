@@ -18,7 +18,6 @@ metadata:
   {{- with .Values.statefulSet.annotations }}
   {{- toYaml . | nindent 4 }}
   {{- end }}
-    reloader.stakater.com/auto: {{ .Values.reloader.enabled | quote }}
 spec:
   {{- if .Values.service.headless }}
   serviceName: {{ include "ejabberd.fullname" . }}-headless

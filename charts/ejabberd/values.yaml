@@ -186,17 +186,6 @@ service:
   #   # spec: {}
 
 #
-# The chart currently relies on reloader https://github.com/stakater/Reloader to
-# trigger updates of mounted certifcates into the ejabberd containers
-#
-reloader:
-  # -- set to false, if you have reloader already installed in your cluster
-  #    or do not wish to install it at all, also set enabled=false in that case.
-  install: true
-  # -- set to false, if you do not want reloader to manage certificate "renewal"
-  enabled: true
-
-#
 # Define the erlang cookie to be used for clustering
 #
 erlangCookie: "YouR-3rl4n6-C00k!3"
