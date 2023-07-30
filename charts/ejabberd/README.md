@@ -1,7 +1,7 @@
 # ejabberd chart description
 
-This helm chart has the goal to achieve clustering, however, it can also be run
-as a single server.
+The chart's main focus is to achieve clustering in kubernetes, however, it may
+be used to run a single server w/o any downsides as well.
 
 ## General hints
 
@@ -25,10 +25,10 @@ must have the `.pem` format.
 For example to create `.pem` certificates with [cert-manager](https://cert-manager.io/docs/usage/certificate/#additional-certificate-output-formats)
 you need to enable `featureGates: 'AdditionalCertificateOutputFormats=true'`.
 
-Currently the chart does not deploy ejabberd's builtin TURN server correctly. It
-may work with using `.Values.hostNetwork` set to `true`, but that is completely
-untested and only a potential lead. However, the STUN service works as expected.
-A solution for that is in progress.
+Currently the chart does not deploy ejabberd's builtin TURN server correctly.
+A solution for that is in progress. It may work with using `.Values.hostNetwork`
+set to `true`, but that is completely untested. However, the STUN service works
+as expected.
 
 For deploying a standalone TURN server, you can check e.g. ejabberd's child
 project [eturnal](https://github.com/processone/eturnal) which shares the same code.
@@ -59,8 +59,8 @@ don't want this, you can disable it in `.Values.reloader`.
 
 ejabberd's HTTP listener is deployed as well, however, currently no default
 [request_handler](https://docs.ejabberd.im/admin/configuration/listen-options/#request-handlers)
-is configured. Therefore, please configure them in `.Values.https.options` to
-use the HTTP service.
+is configured. Therefore, please configure them in `.Values.listen.https.options`
+to use the HTTP service.
 
 ### Interacting with the statefulset
 
