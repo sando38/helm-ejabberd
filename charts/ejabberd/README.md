@@ -7,14 +7,14 @@ as a single server.
 
 All configuration aspects can be found on ejabberd's [documentation page](https://docs.ejabberd.im/admin/configuration/).
 
-In general, an ejabberd admins should use a **SQL database** in production
-instead of the build-in `mnesia` database. Ejabberd supports [these](https://docs.ejabberd.im/admin/configuration/database/)
-SQL databases. SQL databases need must have schema [ready to use](https://docs.ejabberd.im/admin/configuration/database/#database-schema).
+In general, ejabberd admins should use a **SQL database** in production instead
+of the build-in `mnesia` database. Ejabberd supports [these](https://docs.ejabberd.im/admin/configuration/database/)
+SQL databases. SQL databases need a schema [ready to use](https://docs.ejabberd.im/admin/configuration/database/#database-schema) before the first ejabberd start.
 
 A SQL database improves the reliability of a cluster, as the `mnesia` database
 is prone to be corrupted.
 
-SQL databases can be defined with `values.yaml` in `.Values.sqlDatabase`. Also
+SQL databases can be defined within `values.yaml` in `.Values.sqlDatabase`. Also
 check the `.Values.authentication` if you want to store users in SQL databases
 as well.
 
@@ -24,15 +24,14 @@ must have the `.pem` format.
 
 For example to create `.pem` certificates with [cert-manager](https://cert-manager.io/docs/usage/certificate/#additional-certificate-output-formats)
 you need to enable `featureGates: 'AdditionalCertificateOutputFormats=true'`.
-The mounted secret should contain all certificates for all domains defined in
-`.Values.hosts`.
 
 Currently the chart does not deploy ejabberd's builtin TURN server correctly. It
 may work with using `.Values.hostNetwork` set to `true`, but that is completely
 untested and only a potential lead. However, the STUN service works as expected.
+A solution for that is in progress.
 
-For deploying a TURN server, you can check e.g. ejabberd's child project
-[eturnal](https://github.com/processone/eturnal) which shares the same code.
+For deploying a standalone TURN server, you can check e.g. ejabberd's child
+project [eturnal](https://github.com/processone/eturnal) which shares the same code.
 
 ## Adding the helm repository
 
@@ -44,30 +43,33 @@ A minimal configuration would be:
 hosts:
   - example.com
 certFiles:
-  secretName: "examplecom-tls"
+  secretName:
+    - examplecom-secret
 ```
 
 Deploy with:
 
     helm install ejabberd ejabberd/ejabberd -f /path/to/minimal-config.yaml
 
-This will also deploy [reloader](https://github.com/stakater/Reloader) which is
-used to renew certificates mounted as secrets into the container. If you don't
-want this, you can disable it in `.Values.reloader`.
+**Note:**
 
-Note: This will deploy ejabberd's HTTP listener as well, however, currently no
-default [request_handler](https://docs.ejabberd.im/admin/configuration/listen-options/#request-handlers)
-is configured. Therefore, please configure one in `.Values.https.options` to use
-the HTTP service.
+A helper app [reloader](https://github.com/stakater/Reloader) is deployed which
+is used to renew certificates mounted as secrets into the container. If you
+don't want this, you can disable it in `.Values.reloader`.
+
+ejabberd's HTTP listener is deployed as well, however, currently no default
+[request_handler](https://docs.ejabberd.im/admin/configuration/listen-options/#request-handlers)
+is configured. Therefore, please configure them in `.Values.https.options` to
+use the HTTP service.
 
 ### Interacting with the statefulset
 
 You can interact with the statefulset by using e.g. `kubectl`:
 
 ```shell
-kubectl exec statefulset/ejabberd -- ejabberdctl status
-kubectl exec statefulset/ejabberd -- ejabberdctl register user example.com pass
-kubectl exec statefulset/ejabberd -- ejabberdctl list_cluster
+kubectl exec sts/ejabberd -- ejabberdctl status
+kubectl exec sts/ejabberd -- ejabberdctl register user example.com pass
+kubectl exec sts/ejabberd -- ejabberdctl list_cluster
 ```
 
 ### Connecting with an XMPP account
