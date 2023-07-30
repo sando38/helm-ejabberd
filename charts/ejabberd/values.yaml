@@ -28,7 +28,7 @@ updateStrategy:
 # Configure the statefulSet
 #
 statefulSet:
-  # -- Number of pods of the deployment
+  # -- Number of pods of the statefulSet
   replicas: 3
   # -- Number of old history to retain to allow rollback (If not set, default Kubernetes value is set to 10)
   # revisionHistoryLimit: 1
@@ -277,8 +277,8 @@ listen:
     # -- Use nodeport if set. This is useful if you have configured ejabberd in a
     # LoadBalancer.
     # nodePort: 30222
-    # -- c2s top-level listener options:
-    #    https://docs.ejabberd.im/admin/configuration/toplevel/#c2s-cafile
+    # -- ejabberd listener options w/o port, transport:
+    #    https://docs.ejabberd.im/admin/configuration/listen-options/
     options:
       ip: "::"
       module: ejabberd_c2s
@@ -667,7 +667,6 @@ additonalConfigurationItems: {}
 
 # -- Environment variables to be passed to ejabberd
 env: []
-# -- for clustering, the erlang.cookie is needed
 # - name: CTL_ON_CREATE
 #   value: "register admin localhost asd"
 # - name: CTL_ON_START
@@ -765,18 +764,18 @@ resources: {}
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   cpu: 4000m
+  #   memory: 4096Mi
   # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   cpu: 1000m
+  #   memory: 1024Mi
 
 autoscaling:
   enabled: false
   minReplicas: 3
   maxReplicas: 5
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  # targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 
