@@ -159,8 +159,12 @@ data:
       auto: false
     ca_file: /opt/ejabberd/conf/cacert.pem
     certfiles:
+    {{- if .Values.certFiles.sideCar.enabled }}
+      - /opt/ejabberd/certs/*.pem
+    {{- else }}
     {{- range $name := .Values.certFiles.secretName }}
       - /opt/ejabberd/certs/{{ $name }}/*.pem
+    {{- end }}
     {{- end }}
 
     {{- toYaml .Values.logging | nindent 4 }}
@@ -173,6 +177,15 @@ data:
     {{- end }}
 
     listen:
+    {{- if .Values.certFiles.sideCar.enabled }}
+      -
+        port: {{ default 5281 .Values.certFiles.sideCar.apiPort }}
+        transport: "tcp"
+        ip: '127.0.0.1'
+        module: ejabberd_http
+        request_handlers:
+          /api: mod_http_api
+    {{- end }}
     {{- range $name, $config := .Values.listen }}
     {{- if $config }}
     {{- if $config.enabled }}

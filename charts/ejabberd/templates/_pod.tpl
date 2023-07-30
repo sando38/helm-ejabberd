@@ -104,10 +104,16 @@
           {{- toYaml . | nindent 10 }}
         {{- end }}
         volumeMounts:
+        {{- if .Values.certFiles.sideCar.enabled }}
+          - name: {{ include "ejabberd.fullname" . }}-certs
+            mountPath: /opt/ejabberd/certs
+            readOnly: true
+        {{- else }}
         {{- range $name := .Values.certFiles.secretName }}
           - name: ejabberd-certs-{{ $name | replace "." "-" }}
             mountPath: /opt/ejabberd/certs/{{ $name }}
             readOnly: true
+        {{- end }}
         {{- end }}
           - name: mnesia
             mountPath: /opt/ejabberd/database
@@ -160,6 +166,38 @@
         envFrom:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      {{- if .Values.certFiles.sideCar.enabled }}
+      - name: cert-watcher
+        image: kiwigrid/k8s-sidecar:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: {{ include "ejabberd.fullname" . }}-certs
+          mountPath: /opt/ejabberd/certs
+        env:
+        - name: LABEL
+          value: "ejabberd-cert"
+        - name: LABEL_VALUE
+          value: "true"
+        - name: FOLDER
+          value: /opt/ejabberd/certs
+        - name: RESOURCE
+          value: secret
+        - name: NAMESPACE
+          value: {{ template "ejabberd.namespace" . }}
+        - name: UNIQUE_FILENAMES
+          value: "true"
+        - name: REQ_URL
+          value: "http://localhost:{{ default 5281 .Values.certFiles.sideCar.apiPort }}/api/reload_config"
+        - name: REQ_METHOD
+          value: "POST"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      {{- end }}
       {{- if .Values.statefulSet.additionalContainers }}
         {{- toYaml .Values.statefulSet.additionalContainers | nindent 6 }}
       {{- end }}
@@ -190,10 +228,15 @@
         {{- tpl (toYaml .Values.topologySpreadConstraints) . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.certFiles.sideCar.enabled }}
+        - name: {{ include "ejabberd.fullname" . }}-certs
+          emptyDir: {}
+        {{- else }}
         {{- range $name := .Values.certFiles.secretName }}
         - name: ejabberd-certs-{{ $name | replace "." "-" }}
           secret:
             secretName: {{ $name }}
+        {{- end }}
         {{- end }}
         - name: tmp
           emptyDir: {}

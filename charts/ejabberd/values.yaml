@@ -217,8 +217,34 @@ certFiles:
   # -- Please specify your kubernetes secret containing the tls certificates for
   # the domains specified in .Values.hosts, otherwise the service will not work
   secretName:
-    - tls-secret-for-localhost
+    - your-tls-cert-secret
     # - another-secret-for-another-domain
+  sideCar:
+    # Using a k8s sidecar for secret watching and reloading ejabberd, if TLS
+    # certificates have been renewed.
+    #
+    # If enabled, the specified secrets MUST HAVE the following metadata.labels:
+    #
+    #    apiVersion: v1
+    #    kind: Secret
+    #    metadata:
+    #      name: secretname
+    #      labels:
+    #        ejabberd-cert: "true"
+    #      ...
+    #
+    # If using cert-manager, use the secretTemplate for specifying the label:
+    # https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources
+    #
+    # HINT:
+    #   - if you use non-default/custom ACLs/API permissions, loopback must be
+    #     allowed to make API calls, as the sidecar makes HTTP calls to the API.
+    #   - make sure `mod_http_api: {}` is part of your modules (this is default)
+    enabled: false
+    # The port of the API listener to trigger ejabberd reloads. The API is only
+    # exposed to localhost.
+    #   - make sure it does not conflict with other listeners in .Values.listen
+    apiPort: 5281
 
 #
 # global macros for reuse in the configuration
