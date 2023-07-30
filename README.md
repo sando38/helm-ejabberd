@@ -33,7 +33,7 @@ The image name is: `ghcr.io/sando38/ejabberd:23.xx-k8s1`
 ### Difference to the official ejabberd container image
 
 This repository contains the patches applied to the official ejabberd [releases](https://github.com/processone/ejabberd/releases)
-in the [image](image) directory.
+in the [image](image) directory and the respective [workflow file](.github/workflows/ctr.yaml).
 
 A short summary:
 
@@ -59,4 +59,4 @@ first release image has a suffix `-k8s1`.
 
 ## Merging the chart upstream
 
-Yes, that is considered and actually also desired.
+Yes, that is considered and actually also desired ([link to discussion](https://github.com/processone/ejabberd/discussions/4065)).
