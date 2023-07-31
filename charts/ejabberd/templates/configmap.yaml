@@ -107,6 +107,9 @@ data:
       console commands:
         from:
         - ejabberd_ctl
+        {{- if .Values.certFiles.sideCar.enabled }}
+        - mod_http_api
+        {{- end }}
         what: '*'
         who: all
       public commands:

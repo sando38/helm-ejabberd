@@ -442,6 +442,7 @@ apiPermissions: {}
   # "console commands":
   #   from:
   #     - ejabberd_ctl
+  #     - mod_http_api
   #   who: all
   #   what: "*"
   # "admin access":
