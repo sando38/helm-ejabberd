@@ -25,6 +25,9 @@ must have the `.pem` format.
 For example to create `.pem` certificates with [cert-manager](https://cert-manager.io/docs/usage/certificate/#additional-certificate-output-formats)
 you need to enable `featureGates: 'AdditionalCertificateOutputFormats=true'`.
 
+To use a sidecar for watching TLS cert secrets, enable the sidecar in
+`.Values.certFiles.sideCar.enabled`.
+
 Currently the chart does not deploy ejabberd's builtin TURN server correctly.
 A solution for that is in progress. It may work with using `.Values.hostNetwork`
 set to `true`, but that is completely untested. However, the STUN service works
@@ -53,9 +56,11 @@ Deploy with:
 
 **Note:**
 
-A helper app [reloader](https://github.com/stakater/Reloader) is deployed which
-is used to renew certificates mounted as secrets into the container. If you
-don't want this, you can disable it in `.Values.reloader`.
+A sidecar is used to watch changes for ejabberd secrets containing TLS certs.
+The sidecar tends to be slower than ejabberd at startup. If you experience certs
+not being loaded correctly, consider increasing the wait period in
+`.Values.certFiles.sideCar.waitPeriod`. See also the respective [issue](https://github.com/sando38/helm-ejabberd/issues/4).
+The sidecar is disabled at default.
 
 ejabberd's HTTP listener is deployed as well, however, currently no default
 [request_handler](https://docs.ejabberd.im/admin/configuration/listen-options/#request-handlers)
