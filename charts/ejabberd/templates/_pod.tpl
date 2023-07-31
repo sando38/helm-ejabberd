@@ -56,7 +56,11 @@
           {{- else }}
           tcpSocket:
             port: {{ default .Values.listen.c2s.port .Values.healthCheck.tcpPort }}
+          {{- if .Values.certFiles.sideCar.enabled }}
+          initialDelaySeconds: {{ default 10 .Values.certFiles.sideCar.waitPeriod }}
+          {{- else }}
           initialDelaySeconds: 10
+          {{- end }}
           periodSeconds: 10
           {{- end }}
         livenessProbe:
@@ -65,7 +69,11 @@
           {{- else }}
           tcpSocket:
             port:  {{ default .Values.listen.c2s.port .Values.healthCheck.tcpPort }}
+          {{- if .Values.certFiles.sideCar.enabled }}
+          initialDelaySeconds: {{ default 10 .Values.certFiles.sideCar.waitPeriod }}
+          {{- else }}
           initialDelaySeconds: 10
+          {{- end }}
           periodSeconds: 10
           {{- end }}
         lifecycle:
