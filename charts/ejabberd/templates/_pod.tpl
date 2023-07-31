@@ -61,7 +61,7 @@
           {{- else }}
           initialDelaySeconds: 10
           {{- end }}
-          periodSeconds: 10
+          periodSeconds: 15
           {{- end }}
         livenessProbe:
           {{- if .Values.statefulSet.livenessProbe }}
@@ -74,7 +74,7 @@
           {{- else }}
           initialDelaySeconds: 10
           {{- end }}
-          periodSeconds: 10
+          periodSeconds: 15
           {{- end }}
         lifecycle:
           {{- with .Values.statefulSet.lifecycle }}
