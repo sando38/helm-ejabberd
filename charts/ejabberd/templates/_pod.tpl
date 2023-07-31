@@ -159,6 +159,10 @@
           - name: ERL_DIST_PORT
             value: {{ default 5210 .Values.service.headless.erlDistPort | quote }}
         {{- end }}
+        {{- if .Values.certFiles.sideCar.enabled }}
+          - name: WAIT_PERIOD
+            value: {{ default 10 .Values.certFiles.sideCar.waitPeriod | quote }}
+        {{- end }}
         {{- with .Values.env }}
           {{- toYaml . | nindent 10 }}
         {{- end }}

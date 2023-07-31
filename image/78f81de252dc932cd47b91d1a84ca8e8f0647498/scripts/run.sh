@@ -51,6 +51,9 @@ else
     fi
 fi
 
+info 'Finished init script, wait shortly ...'
+sleep "${WAIT_PERIOD:-10}"
+
 # trap for graceful shutdown, disconnection from cluster happens automatically
 _cleanup() {
     info "==> Gracefully shut down ejabberd pod $sts_name@$pod_svc_name ..."
@@ -61,7 +64,7 @@ _cleanup() {
 # trap SIGTERM
 trap '_cleanup' SIGTERM
 
-info 'Finished init script, start main process ...'
+info 'Start ejabberd main process ...'
 exec ejabberdctl foreground &
 pid=$!
 wait $pid

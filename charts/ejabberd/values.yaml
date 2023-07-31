@@ -230,6 +230,9 @@ certFiles:
     #     allowed to make API calls, as the sidecar makes HTTP calls to the API.
     #   - make sure `mod_http_api: {}` is part of your modules (this is default)
     enabled: false
+    # Specify a short waiting period in seconds before starting ejabberd's main
+    # process, see: https://github.com/sando38/helm-ejabberd/issues/4
+    waitPeriod: 10
     # The port of the API listener to trigger ejabberd reloads. The API is only
     # exposed to localhost.
     #   - make sure it does not conflict with other listeners in .Values.listen
