@@ -1,0 +1,25 @@
+{{- if .Values.certFiles.sideCar.enabled }}
+{{- if .Values.certFiles.sideCar.createRbac }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "ejabberd.fullname" . }}-cert-watcher-clusterrole
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "ejabberd.fullname" . }}-cert-watcher-clusterrolebind
+roleRef:
+  kind: ClusterRole
+  name: {{ include "ejabberd.fullname" . }}-cert-watcher-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: {{ include "ejabberd.serviceAccountName" . }}
+  namespace: {{ template "ejabberd.namespace" . }}
+{{- end }}
+{{- end }}

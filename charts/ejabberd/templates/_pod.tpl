@@ -175,7 +175,7 @@
           mountPath: /opt/ejabberd/certs
         env:
         - name: LABEL
-          value: "ejabberd-cert"
+          value: "helm-ejabberd/tls-certificate"
         - name: LABEL_VALUE
           value: "true"
         - name: FOLDER

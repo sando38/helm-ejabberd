@@ -219,7 +219,7 @@ certFiles:
     #    metadata:
     #      name: secretname
     #      labels:
-    #        ejabberd-cert: "true"
+    #        helm-ejabberd/tls-certificate: "true"
     #      ...
     #
     # If using cert-manager, use the secretTemplate for specifying the label:
@@ -234,6 +234,7 @@ certFiles:
     # exposed to localhost.
     #   - make sure it does not conflict with other listeners in .Values.listen
     apiPort: 5281
+    createRbac: true
 
 #
 # global macros for reuse in the configuration
