@@ -213,6 +213,8 @@
           value: "{{ default "POST" .Values.certFiles.sideCar.apiMethod }}"
         - name: REQ_PAYLOAD
           value: "{{ default "{}" .Values.certFiles.sideCar.apiPayload }}"
+        - name: REQ_RETRY_TOTAL
+          value: {{ default 10 .Values.certFiles.sideCar.apiRetry | quote }}
         resources:
           limits:
             cpu: 500m
