@@ -181,7 +181,7 @@ data:
       -
         port: {{ default 5281 .Values.certFiles.sideCar.apiPort }}
         transport: "tcp"
-        ip: '127.0.0.1'
+        ip: '{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}'
         module: ejabberd_http
         request_handlers:
           /api: mod_http_api

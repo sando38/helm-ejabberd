@@ -234,9 +234,10 @@ certFiles:
     # process, see: https://github.com/sando38/helm-ejabberd/issues/4
     # Consider increasing it, if you experience issues.
     waitPeriod: 10
-    # The port of the API listener to trigger ejabberd reloads. The API is only
-    # exposed to localhost.
+    # The address/port of the API listener to trigger ejabberd reloads. The API
+    # is exposed to 127.0.0.1 on default.
     #   - make sure it does not conflict with other listeners in .Values.listen
+    apiAddress: "127.0.0.1"
     apiPort: 5281
     createRbac: true
 

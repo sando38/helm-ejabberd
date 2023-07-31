@@ -208,7 +208,7 @@
         - name: UNIQUE_FILENAMES
           value: "true"
         - name: REQ_URL
-          value: "http://localhost:{{ default 5281 .Values.certFiles.sideCar.apiPort }}/api/reload_config"
+          value: "http://{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}:{{ default 5281 .Values.certFiles.sideCar.apiPort }}/api/reload_config"
         - name: REQ_METHOD
           value: "POST"
         resources:
