@@ -208,9 +208,11 @@
         - name: UNIQUE_FILENAMES
           value: "true"
         - name: REQ_URL
-          value: "http://{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}:{{ default 5281 .Values.certFiles.sideCar.apiPort }}/api/reload_config"
+          value: "http://{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}:{{ default 5281 .Values.certFiles.sideCar.apiPort }}/api/{{ default "reload_config" .Values.certFiles.sideCar.apiCmd }}"
         - name: REQ_METHOD
-          value: "POST"
+          value: "{{ default "POST" .Values.certFiles.sideCar.apiMethod }}"
+        - name: REQ_PAYLOAD
+          value: "{{ default "{}" .Values.certFiles.sideCar.apiPayload }}"
         resources:
           limits:
             cpu: 500m
