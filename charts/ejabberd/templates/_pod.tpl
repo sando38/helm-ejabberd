@@ -170,6 +170,15 @@
       - name: cert-watcher
         image: kiwigrid/k8s-sidecar:latest
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsUser: 9000
+          runAsGroup: 9000
+          runAsNonRoot: true
+          privileged: false
+          capabilities:
+            drop: [ALL]
         volumeMounts:
         - name: {{ include "ejabberd.fullname" . }}-certs
           mountPath: /opt/ejabberd/certs
