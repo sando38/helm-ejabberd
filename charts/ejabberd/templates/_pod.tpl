@@ -67,7 +67,7 @@
               files="$(cd /tmp/certs/$secret ; ls *)" ;
               for file in $files ;
               do
-                echo ">> copy $secret to /opt/ejabberd/certs" ;
+                echo ">> copy $secret/$file to /opt/ejabberd/certs" ;
                 name="namespace_$POD_NAMESPACE.secret_$secret.$file" ;
                 cp /tmp/certs/$secret/$file /opt/ejabberd/certs/$name ;
               done ;
