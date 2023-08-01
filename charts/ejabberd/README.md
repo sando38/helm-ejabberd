@@ -7,16 +7,20 @@ be used to run a single server w/o any downsides as well.
 
 All configuration aspects can be found on ejabberd's [documentation page](https://docs.ejabberd.im/admin/configuration/).
 
+### Persistence and database
+
 In general, ejabberd admins should use a **SQL database** in production instead
 of the build-in `mnesia` database. Ejabberd supports [these](https://docs.ejabberd.im/admin/configuration/database/)
 SQL databases. SQL databases need a schema [ready to use](https://docs.ejabberd.im/admin/configuration/database/#database-schema) before the first ejabberd start.
 
-A SQL database improves the reliability of a cluster, as the `mnesia` database
-is prone to be corrupted.
+A SQL database improves the reliability of a cluster, as the builtin `mnesia`
+database is not reliable enough for data persistence, except for testing.
 
 SQL databases can be defined within `values.yaml` in `.Values.sqlDatabase`. Also
 check the `.Values.authentication` if you want to store users in SQL databases
 as well.
+
+### Domain TLS certificates and ACME client
 
 This chart does not support ejabberd's **ACME client**. Instead the chart relies
 on the admin to mount valid **TLS certificates** into the container. Those certs
@@ -25,8 +29,11 @@ must have the `.pem` format.
 For example to create `.pem` certificates with [cert-manager](https://cert-manager.io/docs/usage/certificate/#additional-certificate-output-formats)
 you need to enable `featureGates: 'AdditionalCertificateOutputFormats=true'`.
 
-To use a sidecar for watching TLS cert secrets, enable the sidecar in
-`.Values.certFiles.sideCar.enabled`.
+To use a sidecar for watching TLS certificate secrets, enable the sidecar in
+`.Values.certFiles.sideCar.enabled`. This will make sure, that cert renewals are
+automatically injected into ejabberd's runtime process.
+
+### STUN/TURN
 
 Currently the chart does not deploy ejabberd's builtin TURN server correctly.
 A solution for that is in progress. It may work with using `.Values.hostNetwork`
@@ -34,7 +41,8 @@ set to `true`, but that is completely untested. However, the STUN service works
 as expected.
 
 For deploying a standalone TURN server, you can check e.g. ejabberd's child
-project [eturnal](https://github.com/processone/eturnal) which shares the same code.
+project [eturnal](https://github.com/processone/eturnal) which shares the same
+code.
 
 ## Adding the helm repository
 
