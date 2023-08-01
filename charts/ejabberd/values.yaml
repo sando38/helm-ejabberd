@@ -239,7 +239,7 @@ certFiles:
     apiCmd: "reload_config"
     apiMethod: "POST"
     apiPayload: "{}"
-    apiRetry: 10
+    apiRetry: 5
 
 #
 # global macros for reuse in the configuration

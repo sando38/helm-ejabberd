@@ -260,7 +260,7 @@
         - name: REQ_PAYLOAD
           value: "{{ default "{}" .Values.certFiles.sideCar.apiPayload }}"
         - name: REQ_RETRY_TOTAL
-          value: {{ default 10 .Values.certFiles.sideCar.apiRetry | quote }}
+          value: {{ default 5 .Values.certFiles.sideCar.apiRetry | quote }}
         resources:
           limits:
             cpu: 500m
