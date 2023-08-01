@@ -56,12 +56,6 @@ Deploy with:
 
 **Note:**
 
-A sidecar is used to watch changes for ejabberd secrets containing TLS certs.
-The sidecar tends to be slower than ejabberd at startup. If you experience certs
-not being loaded correctly, consider increasing the wait period in
-`.Values.certFiles.sideCar.waitPeriod`. See also the respective [issue](https://github.com/sando38/helm-ejabberd/issues/4).
-The sidecar is disabled at default.
-
 ejabberd's HTTP listener is deployed as well, however, currently no default
 [request_handler](https://docs.ejabberd.im/admin/configuration/listen-options/#request-handlers)
 is configured. Therefore, please configure them in `.Values.listen.https.options`

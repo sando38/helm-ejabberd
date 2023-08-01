@@ -35,9 +35,55 @@
           {{- toYaml .options | nindent 10 }}
         {{- end }}
       {{- end }}
-      {{- with .Values.statefulSet.initContainers }}
+      {{- if or .Values.statefulSet.initContainers .Values.certFiles.sideCar.enabled }}
       initContainers:
+      {{- if .Values.certFiles.sideCar.enabled }}
+      - name: init-copy-certs
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsUser: 9000
+          runAsGroup: 9000
+          runAsNonRoot: true
+          privileged: false
+          capabilities:
+            drop: [ALL]
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        command: ["/bin/sh", "-c"]
+        args:
+          - >-
+            set -e ;
+            set -u ;
+            echo "> initContainer to copy k8s secrets to cert directory ..." ;
+            secrets="$(cd /tmp/certs ; ls */ -d | sed -e 's|/||')" ;
+            for secret in $secrets ;
+            do
+              files="$(cd /tmp/certs/$secret ; ls *)" ;
+              for file in $files ;
+              do
+                echo ">> copy $secret to /opt/ejabberd/certs" ;
+                name="namespace_$POD_NAMESPACE.secret_$secret.$file" ;
+                cp /tmp/certs/$secret/$file /opt/ejabberd/certs/$name ;
+              done ;
+            done ;
+            echo ">> copying complete!"
+        volumeMounts:
+          - name: {{ include "ejabberd.fullname" . }}-certs
+            mountPath: /opt/ejabberd/certs
+        {{- range $name := .Values.certFiles.secretName }}
+          - name: ejabberd-certs-{{ $name | replace "." "-" }}
+            mountPath: /tmp/certs/{{ $name }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.statefulSet.initContainers }}
       {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- end }}
       {{- if .Values.statefulSet.shareProcessNamespace }}
       shareProcessNamespace: true
@@ -169,7 +215,7 @@
         {{- end }}
         {{- if .Values.certFiles.sideCar.enabled }}
           - name: WAIT_PERIOD
-            value: {{ default 10 .Values.certFiles.sideCar.waitPeriod | quote }}
+            value: {{ default 0 .Values.certFiles.sideCar.waitPeriod | quote }}
         {{- end }}
         {{- with .Values.env }}
           {{- toYaml . | nindent 10 }}
@@ -256,12 +302,11 @@
         {{- if .Values.certFiles.sideCar.enabled }}
         - name: {{ include "ejabberd.fullname" . }}-certs
           emptyDir: {}
-        {{- else }}
+        {{- end }}
         {{- range $name := .Values.certFiles.secretName }}
         - name: ejabberd-certs-{{ $name | replace "." "-" }}
           secret:
             secretName: {{ $name }}
-        {{- end }}
         {{- end }}
         - name: tmp
           emptyDir: {}

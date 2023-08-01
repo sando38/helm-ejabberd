@@ -52,7 +52,7 @@ else
 fi
 
 info 'Finished init script, wait shortly ...'
-sleep "${WAIT_PERIOD:-10}"
+sleep "${WAIT_PERIOD:-0}"
 
 # trap for graceful shutdown, disconnection from cluster happens automatically
 _cleanup() {

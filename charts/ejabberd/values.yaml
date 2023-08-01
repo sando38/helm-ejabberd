@@ -231,10 +231,6 @@ certFiles:
     #   - make sure `mod_http_api: {}` is part of your modules (this is default)
     enabled: false
     createRbac: true
-    # Specify a short waiting period in seconds before starting ejabberd's main
-    # process, see: https://github.com/sando38/helm-ejabberd/issues/4
-    # Consider increasing it, if you experience issues.
-    waitPeriod: 5
     # The address/port of the API listener to trigger ejabberd reloads. The API
     # is exposed to 127.0.0.1 on default.
     #   - make sure it does not conflict with other listeners in .Values.listen
