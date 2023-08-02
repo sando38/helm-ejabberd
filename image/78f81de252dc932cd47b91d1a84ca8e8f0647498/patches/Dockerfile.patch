@@ -25,7 +25,7 @@ index adbcdb98d..05ba50597 100644
 +WORKDIR $BUILD_DIR/.ejabberd-modules/sources/ejabberd-contrib
 +
 +# include some ejabberd contribution modules which may be nice for clusters
-+RUN git clone https://github.com/mjohnson9/ejabberd-contrib --branch fix/mod_s3_upload-host-no-match --depth 1 . \
++RUN git clone https://github.com/processone/ejabberd-contrib --depth 1 . \
 +    && install mod_http_redirect/src/*.erl $BUILD_DIR/src \
 +    && install mod_s3_upload/src/*.erl $BUILD_DIR/src \
 +    && install mod_s3_upload/include/*.hrl $BUILD_DIR/include \
