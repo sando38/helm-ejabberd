@@ -33,22 +33,23 @@ To use a sidecar for watching TLS certificate secrets, enable the sidecar in
 `.Values.certFiles.sideCar.enabled`. This will make sure, that cert renewals are
 automatically injected into ejabberd's runtime process.
 
-**Important**: If using the sidecar, the kubernetes TLS certificate secrets are
-expected to have an annotation and label:
+**Important**: If you use the sidecar, the kubernetes TLS certificate secrets
+are expected to have an annotation and label:
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: secretname
+  name: secretName
   labels:
     helm-ejabberd/watcher: "true"
   annotations:
     k8s-sidecar-target-directory: "certs/secretName"
 ```
 
-The `secretName` in the annotation must be identical to the name reference in
-`.Values.certFiles.secretName`.
+The `secretName` in the annotation must be identical to the secret name(s)
+which is(are) referenced in `.Values.certFiles.secretName`. Also they must be in
+the same namespace as the helm chart.
 
 If you use cert-manager, use the [secretTemplate](https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources) for specifying the annotation and label.
 
