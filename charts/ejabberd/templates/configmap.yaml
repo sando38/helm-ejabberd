@@ -4,6 +4,7 @@ metadata:
   name: {{ include "ejabberd.fullname" . }}-config
   namespace: {{ template "ejabberd.namespace" . }}
   labels:
+    helm-ejabberd/watcher: "true"
     {{- include "ejabberd.labels" $ | nindent 4 }}
   annotations:
     k8s-sidecar-target-directory: "conf"

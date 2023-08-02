@@ -5,6 +5,10 @@ project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
 
+## 0.4.1 - 2023-08-02
+### Fixed
+- chart/configmap: fix missing label for sidecar detection.
+
 ## 0.4.0 - 2023-08-02
 ### Added
 - Also use the sidecar for configmap/ejabberd.yml reloading.
