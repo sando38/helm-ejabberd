@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+
+## 0.4.0 - 2020-08-02
 ### Added
 - Also use the sidecar for configmap/ejabberd.yml reloading.
 - Sidecar: TLS secrets must have an annotation
