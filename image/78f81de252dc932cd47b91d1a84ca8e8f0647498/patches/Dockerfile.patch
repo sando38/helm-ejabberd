@@ -45,9 +45,9 @@ index adbcdb98d..05ba50597 100644
  
 -RUN wget -O "$HOME/conf/cacert.pem" 'https://curl.se/ca/cacert.pem' \
 -    && sed -i '/^loglevel:/a \ \
-+ADD https://curl.se/ca/cacert.pem $HOME/conf/cacert.pem
++ADD https://curl.se/ca/cacert.pem $HOME/cacert/cacert.pem
 +RUN sed -i '/^loglevel:/a \ \
-         \nca_file: /opt/ejabberd/conf/cacert.pem \
+         \nca_file: /opt/ejabberd/cacert/cacert.pem \
          \ncertfiles: \
          \n  - /opt/ejabberd/conf/server.pem' "$HOME/conf/ejabberd.yml"
 @@ -117,16 +132,7 @@ RUN export PEM=$HOME/conf/server.pem \
