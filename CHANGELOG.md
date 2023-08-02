@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+### Added
+- Also use the sidecar for configmap/ejabberd.yml reloading.
+- Sidecar: TLS secrets must have an annotation
+  `k8s-sidecar-target-directory: "certs/secretName"`, where `secretName` is the
+  name of the corresponding secret, e.g. `secret-examplecom` in
+  `.Values.certFiles.secretName`.
+
 ### Changed
+- Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s4`.
 - Sidecar: API request retry reduced to 5 times (sidecar default).
 - InitContainer: Improve logging.
 - General improvements to documentation in various files.
@@ -31,7 +39,7 @@ project adheres to [Semantic Versioning][SemVer].
 
 ## 0.3.2 - 2020-07-31
 ### Changed
-- Bumb ejabberd image to `-k8s3`.
+- Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s3`.
 - Add a wait period for ejabberd at startup.
 - General improvements to documentation in various files.
 

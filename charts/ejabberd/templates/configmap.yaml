@@ -5,7 +5,13 @@ metadata:
   namespace: {{ template "ejabberd.namespace" . }}
   labels:
     {{- include "ejabberd.labels" $ | nindent 4 }}
+  annotations:
+    k8s-sidecar-target-directory: "conf"
 data:
+  inetrc: |-
+    {lookup,["file","native"]}.
+    {host,{127,0,0,1}, ["localhost","hostalias"]}.
+    {file, resolv, "/etc/resolv.conf"}.
   modules-default.yml: |-
     modules:
       mod_adhoc: {}
@@ -160,14 +166,10 @@ data:
     {{- toYaml .Values.hosts | nindent 6 }}
     acme:
       auto: false
-    ca_file: /opt/ejabberd/conf/cacert.pem
+    ca_file: /opt/ejabberd/cacert/cacert.pem
     certfiles:
-    {{- if .Values.certFiles.sideCar.enabled }}
-      - /opt/ejabberd/certs/*.pem
-    {{- else }}
     {{- range $name := .Values.certFiles.secretName }}
       - /opt/ejabberd/certs/{{ $name }}/*.pem
-    {{- end }}
     {{- end }}
 
     {{- toYaml .Values.logging | nindent 4 }}

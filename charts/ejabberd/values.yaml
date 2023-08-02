@@ -212,15 +212,22 @@ certFiles:
     # Using a k8s sidecar for secret watching and reloading ejabberd, if TLS
     # certificates have been renewed.
     #
-    # If enabled, the specified secrets MUST HAVE the following metadata.labels:
+    # If enabled, the specified secrets MUST HAVE the following metadata.labels,
+    # metadata.annotations respectively:
     #
     #    apiVersion: v1
     #    kind: Secret
     #    metadata:
     #      name: secretname
     #      labels:
-    #        helm-ejabberd/tls-certificate: "true"
+    #        helm-ejabberd/watcher: "true"
+    #      annotations:
+    #        k8s-sidecar-target-directory: "certs/secretName"
     #      ...
+    #
+    # IMPORTANT: Note the value for k8s-sidecar-target-directory set to
+    #            "cert/secretName", where secretName is the name of the
+    #            corresponding secret, as defined in .Values.certFiles.secretName
     #
     # If using cert-manager, use the secretTemplate for specifying the label:
     # https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources

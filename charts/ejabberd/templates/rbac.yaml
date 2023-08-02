@@ -6,7 +6,7 @@ metadata:
   name: {{ include "ejabberd.fullname" . }}-cert-watcher-clusterrole
 rules:
 - apiGroups: [""]
-  resources: ["secrets"]
+  resources: ["configmaps", "secrets"]
   verbs: ["get", "watch", "list"]
 ---
 kind: ClusterRoleBinding

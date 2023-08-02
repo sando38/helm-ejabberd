@@ -60,19 +60,13 @@
           - >-
             set -e ;
             set -u ;
-            echo "> initContainer to copy k8s secrets to cert directory ..." ;
-            secrets="$(cd /tmp/certs ; ls */ -d | sed -e 's|/||')" ;
-            for secret in $secrets ;
-            do
-              files="$(cd /tmp/certs/$secret ; ls *)" ;
-              for file in $files ;
-              do
-                echo ">> copy $secret/$file to /opt/ejabberd/certs" ;
-                name="namespace_$POD_NAMESPACE.secret_$secret.$file" ;
-                cp /tmp/certs/$secret/$file /opt/ejabberd/certs/$name ;
-              done ;
-            done ;
-            echo ">> copying complete!"
+            echo "> initContainer to copy configmap & secrets ..." ;
+            echo ">> Copy config files to /opt/ejabberd/conf" ;
+            cp /tmp/conf/* /opt/ejabberd/conf ;
+            echo ">> Copying config files complete!" ;
+            echo ">> Copy TLS certs to /opt/ejabberd/certs" ;
+            cp -r /tmp/certs/* /opt/ejabberd/certs ;
+            echo ">> Copying TLS certs complete!"
         volumeMounts:
           - name: {{ include "ejabberd.fullname" . }}-certs
             mountPath: /opt/ejabberd/certs
@@ -80,6 +74,10 @@
           - name: ejabberd-certs-{{ $name | replace "." "-" }}
             mountPath: /tmp/certs/{{ $name }}
         {{- end }}
+          - name: {{ include "ejabberd.fullname" . }}-config
+            mountPath: /opt/ejabberd/conf
+          - name: {{ include "ejabberd.fullname" . }}-configfiles
+            mountPath: /tmp/conf
       {{- end }}
       {{- with .Values.statefulSet.initContainers }}
       {{- toYaml . | nindent 6 }}
@@ -172,26 +170,8 @@
           - name: mnesia
             mountPath: /opt/ejabberd/database
           - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/ejabberd.yml
-            subPath: ejabberd.yml
-          - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/modules-default.yml
-            subPath: modules-default.yml
-          - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/shaper.yml
-            subPath: shaper.yml
-          - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/shaper-rules.yml
-            subPath: shaper-rules.yml
-          - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/acl.yml
-            subPath: acl.yml
-          - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/api-permissions.yml
-            subPath: api-permissions.yml
-          - name: {{ include "ejabberd.fullname" . }}-config
-            mountPath: /opt/ejabberd/conf/access-rules.yml
-            subPath: access-rules.yml
+            mountPath: /opt/ejabberd/conf
+            #readOnly: true
           {{- if .Values.additionalVolumeMounts }}
             {{- toYaml .Values.additionalVolumeMounts | nindent 10 }}
           {{- end }}
@@ -225,7 +205,7 @@
           {{- toYaml . | nindent 10 }}
         {{- end }}
       {{- if .Values.certFiles.sideCar.enabled }}
-      - name: cert-watcher
+      - name: watcher
         image: kiwigrid/k8s-sidecar:latest
         imagePullPolicy: IfNotPresent
         securityContext:
@@ -240,19 +220,21 @@
         volumeMounts:
         - name: {{ include "ejabberd.fullname" . }}-certs
           mountPath: /opt/ejabberd/certs
+        - name: {{ include "ejabberd.fullname" . }}-config
+          mountPath: /opt/ejabberd/conf
         env:
         - name: LABEL
-          value: "helm-ejabberd/tls-certificate"
+          value: "helm-ejabberd/watcher"
         - name: LABEL_VALUE
           value: "true"
         - name: FOLDER
-          value: /opt/ejabberd/certs
+          value: /opt/ejabberd
         - name: RESOURCE
           value: secret
         - name: NAMESPACE
           value: {{ template "ejabberd.namespace" . }}
-        - name: UNIQUE_FILENAMES
-          value: "true"
+        #- name: UNIQUE_FILENAMES
+        #  value: "true"
         - name: REQ_URL
           value: "http://{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}:{{ default 5281 .Values.certFiles.sideCar.apiPort }}/api/{{ default "reload_config" .Values.certFiles.sideCar.apiCmd }}"
         - name: REQ_METHOD
@@ -308,26 +290,17 @@
           secret:
             secretName: {{ $name }}
         {{- end }}
-        - name: tmp
+        {{- if .Values.certFiles.sideCar.enabled }}
+        - name: {{ include "ejabberd.fullname" . }}-config
           emptyDir: {}
+        - name: {{ include "ejabberd.fullname" . }}-configfiles
+          configMap:
+            name: {{ include "ejabberd.fullname" . }}-config
+        {{- else }}
         - name: {{ include "ejabberd.fullname" . }}-config
           configMap:
             name: {{ include "ejabberd.fullname" . }}-config
-            items:
-            - key: ejabberd.yml
-              path: ejabberd.yml
-            - key: modules-default.yml
-              path: modules-default.yml
-            - key: shaper.yml
-              path: shaper.yml
-            - key: shaper-rules.yml
-              path: shaper-rules.yml
-            - key: acl.yml
-              path: acl.yml
-            - key: api-permissions.yml
-              path: api-permissions.yml
-            - key: access-rules.yml
-              path: access-rules.yml
+        {{- end }}
         {{- if .Values.volumes }}
           {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}
