@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+### Fixed
+- chart/_pod.tpl: fix `RESOURCE` for sidecar to detect both secret & configmap.
 
 ## 0.4.1 - 2023-08-02
 ### Fixed

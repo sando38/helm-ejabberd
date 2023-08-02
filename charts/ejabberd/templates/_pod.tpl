@@ -230,7 +230,7 @@
         - name: FOLDER
           value: /opt/ejabberd
         - name: RESOURCE
-          value: secret
+          value: both
         - name: NAMESPACE
           value: {{ template "ejabberd.namespace" . }}
         #- name: UNIQUE_FILENAMES
