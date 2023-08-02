@@ -1,5 +1,5 @@
 diff --git a/.github/container/Dockerfile b/.github/container/Dockerfile
-index adbcdb98d..05ba50597 100644
+index adbcdb98d..c269c9691 100644
 --- a/.github/container/Dockerfile
 +++ b/.github/container/Dockerfile
 @@ -5,6 +5,7 @@ ARG ELIXIR_VSN='1.14.4'
@@ -21,7 +21,7 @@ index adbcdb98d..05ba50597 100644
 @@ -48,7 +50,20 @@ RUN mix local.hex --force \
  ARG BUILD_DIR
  COPY / $BUILD_DIR/
- 
+
 +WORKDIR $BUILD_DIR/.ejabberd-modules/sources/ejabberd-contrib
 +
 +# include some ejabberd contribution modules which may be nice for clusters
@@ -39,20 +39,22 @@ index adbcdb98d..05ba50597 100644
  RUN mv .github/container/ejabberdctl.template . \
      && ./autogen.sh \
      && ./configure --with-rebar=mix --enable-all \
-@@ -67,8 +82,8 @@ RUN cp -p $BUILD_DIR/tools/captcha*.sh $HOME-$VERSION/lib
+@@ -67,9 +82,9 @@ RUN cp -p $BUILD_DIR/tools/captcha*.sh $HOME-$VERSION/lib
  RUN find "$HOME-$VERSION/bin" -name 'ejabberd' -delete \
      && find "$HOME-$VERSION/releases" -name 'COOKIE' -delete
- 
+
 -RUN wget -O "$HOME/conf/cacert.pem" 'https://curl.se/ca/cacert.pem' \
 -    && sed -i '/^loglevel:/a \ \
+-        \nca_file: /opt/ejabberd/conf/cacert.pem \
 +ADD https://curl.se/ca/cacert.pem $HOME/cacert/cacert.pem
 +RUN sed -i '/^loglevel:/a \ \
-         \nca_file: /opt/ejabberd/cacert/cacert.pem \
++        \nca_file: /opt/ejabberd/cacert/cacert.pem \
          \ncertfiles: \
          \n  - /opt/ejabberd/conf/server.pem' "$HOME/conf/ejabberd.yml"
+
 @@ -117,16 +132,7 @@ RUN export PEM=$HOME/conf/server.pem \
              -subj "/CN=localhost"
- 
+
  RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
 -    && setcap 'cap_net_bind_service=+ep' $(find $home_root_dir -name beam.smp) \
 -    && echo -e \
@@ -71,22 +73,22 @@ index adbcdb98d..05ba50597 100644
 @@ -134,6 +140,8 @@ RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
          | sed -e "s|so:libc.so|so:libc.musl-$(uname -m).so.1|" \
              > /tmp/runDeps
- 
+
 +COPY k8s-scripts/* usr/local/bin/
 +
  ARG UID
  RUN chown -R $UID:$UID $HOME
- 
+
 @@ -168,12 +176,39 @@ RUN addgroup $USER -g $UID \
  ################################################################################
  #' Build together production image
  FROM scratch AS prod
 -ARG USER
 -ARG HOME
- 
+
  COPY --from=runtime / /
  COPY --from=ejabberd /rootfs /
- 
+
 +################################################################################
 +#' Remove unneccessary packages from runtime environment
 +FROM runtime AS runtime-hardened
@@ -122,7 +124,7 @@ index adbcdb98d..05ba50597 100644
 @@ -186,5 +221,5 @@ USER $USER
  VOLUME ["/$HOME"]
  EXPOSE 1883 4369-4399 5210 5222 5269 5280 5443
- 
+
 -ENTRYPOINT ["/sbin/tini","--","ejabberdctl"]
 -CMD ["foreground"]
 +ENTRYPOINT ["/sbin/tini","--"]
