@@ -29,12 +29,18 @@ must have the `.pem` format.
 For example to create `.pem` certificates with [cert-manager](https://cert-manager.io/docs/usage/certificate/#additional-certificate-output-formats)
 you need to enable `featureGates: 'AdditionalCertificateOutputFormats=true'`.
 
-To use a sidecar for watching TLS certificate secrets, enable the sidecar in
-`.Values.certFiles.sideCar.enabled`. This will make sure, that cert renewals are
-automatically injected into ejabberd's runtime process.
+### SideCar (recommended)
+
+Enable the sidecar in `.Values.certFiles.sideCar.enabled` to use it for watching
+TLS certificate k8s secrets and helm-ejabberd related configmaps.
+
+This will make sure, that all changes done in `values.yaml`, which become part
+of the `ejabberd.yml` file, as well as cert renewals are automatically injected
+into ejabberd's runtime process w/o pod restarts. To provide new configurations
+into the running helm release, use the `helm upgrade` command.
 
 **Important**: If you use the sidecar, the kubernetes TLS certificate secrets
-are expected to have an annotation and label:
+are expected to contain this annotation and label:
 
 ```yaml
 apiVersion: v1
@@ -52,6 +58,42 @@ which is(are) referenced in `.Values.certFiles.secretName`. Also they must be in
 the same namespace as the helm chart.
 
 If you use cert-manager, use the [secretTemplate](https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources) for specifying the annotation and label.
+
+<details><summary>Here is an example cert-manager certificate:</summary>
+<p>
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: le-cert-examplecom
+  namespace: ejabberd
+spec:
+  secretName: le-cert-examplecom
+  privateKey:
+    rotationPolicy: Always
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: "example.com"
+  dnsNames:
+  - "example.com"
+  - "conference.example.com"
+  - "proxy.example.com"
+  - "upload.example.com"
+  - "vjud.example.com"
+  additionalOutputFormats:
+  - type: CombinedPEM
+  - type: DER
+  secretTemplate:
+    annotations:
+      k8s-sidecar-target-directory: "certs/le-cert-examplecom"
+    labels:
+      helm-ejabberd/watcher: "true"
+```
+
+</p>
+</details>
 
 ### STUN/TURN
 

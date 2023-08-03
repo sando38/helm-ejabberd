@@ -209,11 +209,11 @@ certFiles:
     - your-tls-cert-secret
     # - another-secret-for-another-domain
   sideCar:
-    # Using a k8s sidecar for secret watching and reloading ejabberd, if TLS
-    # certificates have been renewed.
+    # Using a k8s sidecar for configmap and secret watching and reloading
+    # ejabberd, if TLS certificates have been renewed.
     #
-    # If enabled, the specified secrets MUST HAVE the following metadata.labels,
-    # metadata.annotations respectively:
+    # If enabled, the specified secrets MUST contain the following
+    # metadata.labels AND metadata.annotations respectively:
     #
     #    apiVersion: v1
     #    kind: Secret
@@ -229,7 +229,7 @@ certFiles:
     #            "cert/secretName", where secretName is the name of the
     #            corresponding secret, as defined in .Values.certFiles.secretName
     #
-    # If using cert-manager, use the secretTemplate for specifying the label:
+    # If using cert-manager, use the secretTemplate for specifying them:
     # https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources
     #
     # HINT:
@@ -241,8 +241,11 @@ certFiles:
     # The address/port of the API listener to trigger ejabberd reloads. The API
     # is exposed to 127.0.0.1 on default.
     #   - make sure it does not conflict with other listeners in .Values.listen
+    #   - if you use IPv6, change this e.g. to "::1"
     apiAddress: "127.0.0.1"
     apiPort: 5281
+    # Usually this part should not be changed, unless you know what you are
+    # doing, see docu: https://docs.ejabberd.im/developer/ejabberd-api/admin-api/#reload-config
     apiCmd: "reload_config"
     apiMethod: "POST"
     apiPayload: "{}"
