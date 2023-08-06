@@ -1,0 +1,60 @@
+name: CI | deploy and test
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - "main"
+      - "bitnami"
+env:
+  KIND_VSN: "0.20.0"
+jobs:
+  deploy_test:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Check out code
+        uses: actions/checkout@v1
+      - name: Lint helm chart
+        shell: bash
+        working-directory: ./charts/ejabberd
+        run: |
+          helm lint .
+      - name: Create KinD cluster
+        shell: bash
+        run: |
+          curl -Lo /tmp/kind https://kind.sigs.k8s.io/dl/v${{ env.KIND_VSN }}/kind-linux-amd64
+          chmod +x /tmp/kind
+          /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.github/ci/kind-conf.yml
+          kubectl get nodes -o wide
+      - name: Create self signed certificate
+        shell: bash
+        run: |
+          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout server.pem -days 365
+          kubectl create secret generic custom-cert --from-file=./server.pem
+      - name: Deploy ejabberd helm chart
+        shell: bash
+        working-directory: ./charts/ejabberd
+        run: |
+          helm install ejabberd -f ../../.github/ci/ejabberd-ci.yaml .
+          kubectl rollout status sts ejabberd
+      - name: Verify deployment
+        shell: bash
+        run: |
+          kubectl get all -o wide
+      - name: Check sidecar
+        shell: bash
+        run: |
+          kubectl logs sts/ejabberd -c watcher
+      - name: Check ejabberd statefulset
+        shell: bash
+        run: |
+          kubectl logs sts/ejabberd -c ejabberd
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin example.com password
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+      # - name: Call ejabberd API
+      #   shell: bash
+      #   run: |
+      #     echo "127.0.0.1 example.com" | sudo tee -a /etc/hosts
+      #     curl -L -d "{}" -X POST -k https://exmaple.com:30443/api/status

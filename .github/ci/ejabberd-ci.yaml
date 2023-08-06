@@ -1,0 +1,31 @@
+statefulSet:
+  replicas: 3
+
+healthCheck:
+  tcpPort: 5210
+
+service:
+  type: NodePort
+
+hosts:
+  - example.com
+
+certFiles:
+  secretName:
+    - custom-cert
+  sideCar:
+    enabled: true
+    createRbac: true
+
+listen:
+  http:
+    expose: true
+    nodePort: 30280
+    options:
+      request_handlers:
+        /api: mod_http_api
+  https:
+    nodePort: 30443
+    options:
+      request_handlers:
+        /api: mod_http_api
