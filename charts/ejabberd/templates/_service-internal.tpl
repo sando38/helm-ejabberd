@@ -42,9 +42,6 @@
     name: {{ $name | quote }}
     targetPort: {{ default $name $config.targetPort }}
     protocol: {{ default "TCP" $config.protocol }}
-    {{- if $config.nodePort }}
-    nodePort: {{ $config.nodePort }}
-    {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
