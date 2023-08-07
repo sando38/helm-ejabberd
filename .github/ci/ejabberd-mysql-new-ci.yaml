@@ -17,6 +17,9 @@ certFiles:
     enabled: true
     createRbac: true
 
+logging:
+  loglevel: debug
+
 listen:
   http:
     expose: true
@@ -33,11 +36,19 @@ listen:
 sqlDatabase:
   enabled: true
   defaultDb: sql
-  newSqlSchema: false
+  newSqlSchema: true
   config:
-    sql_type: pgsql
-    sql_server: pgsql-postgresql
-    sql_port: 5432
+    sql_type: mysql
+    sql_server: mysql.default.svc.cluster.local
+    sql_port: 3306
     sql_database: ejabberd
     sql_username: ejabberd
     sql_password: ejabberd
+  flyway:
+    enabled: true
+    keyValue: "?useSSL=false"
+    mysqlFlavor: "mysql"
+
+authentification:
+  auth_method:
+   - sql

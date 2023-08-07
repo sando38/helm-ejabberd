@@ -658,6 +658,16 @@ sqlDatabase:
     # sql_database: ejabberd
     # sql_username: ejabberd
     # sql_password: ejabberd
+  flyway:
+    ## - database connection details are mapped from .Values.sqlDatabase.config
+    enabled: false
+    ## - key/value pairs to parse to the connection, e.g. "?sslmode=disable" or
+    ##   for mysql: "?allowPublicKeyRetrieval=true&useSSL=false"
+    ##   see https://stackoverflow.com/a/50438872
+    keyValue: ""
+    ## - Only applies if in .Values.sqlDatabase.config sql_type=mysql either:
+    ##   mysql (default) or mariadb.
+    # mysqlFlavor: "mysql"
 
 #
 # redis configuration:

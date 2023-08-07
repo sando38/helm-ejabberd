@@ -1,0 +1,13 @@
+architecture: standalone
+auth:
+  rootPassword: "ejabberd"
+  database: "ejabberd"
+  username: "ejabberd"
+  password: "ejabberd"
+  primary:
+    nodeSelector:
+      backend: sql
+    persistence:
+      enabled: true
+      #existingClaim: "pvc-sql"
+      storageClass: "standard"

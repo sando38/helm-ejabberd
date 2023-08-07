@@ -1,5 +1,4 @@
 global:
-  storageClass: ""
   postgresql:
     auth:
       postgresPassword: "postgres"
