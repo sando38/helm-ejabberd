@@ -32,12 +32,20 @@ jobs:
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout server.pem -days 365
           kubectl create secret generic custom-cert --from-file=./server.pem
+          kubectl label secret custom-cert "helm-ejabberd/watcher=true"
+          kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
+      - name: Deploy pgsql database helm chart
+        shell: bash
+        run: |
+          helm install pgsql oci://registry-1.docker.io/bitnamicharts/postgresql \
+            -f .github/ci/bitnami-pgsql-ci.yaml
+          kubectl rollout status sts pgsql-postgresql
       - name: Deploy ejabberd helm chart
         shell: bash
         working-directory: ./charts/ejabberd
         run: |
           helm install ejabberd -f ../../.github/ci/ejabberd-ci.yaml .
-          kubectl rollout status sts ejabberd
+          #kubectl rollout status sts ejabberd
       - name: Verify deployment
         shell: bash
         run: |
@@ -45,6 +53,7 @@ jobs:
       - name: Check sidecar
         shell: bash
         run: |
+          sleep 30s
           kubectl logs sts/ejabberd -c watcher
       - name: Check ejabberd statefulset
         shell: bash

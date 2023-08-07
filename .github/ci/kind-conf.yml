@@ -10,10 +10,10 @@ nodes:
     - hostPath: /tmp/kind-worker
       containerPath: /tmp/kind-worker
   extraPortMappings:
-  - containerPort: 5222
+  - containerPort: 30222
     hostPort: 30222
     protocol: TCP
-  - containerPort: 5280
+  - containerPort: 30280
     hostPort: 30280
     protocol: TCP
   - containerPort: 30443

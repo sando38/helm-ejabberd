@@ -29,3 +29,15 @@ listen:
     options:
       request_handlers:
         /api: mod_http_api
+
+sqlDatabase:
+  enabled: true
+  defaultDb: sql
+  newSqlSchema: false
+  config:
+    sql_type: pgsql
+    sql_server: pgsql-postgresql
+    sql_port: 5432
+    sql_database: ejabberd
+    sql_username: ejabberd
+    sql_password: ejabberd

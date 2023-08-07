@@ -1,0 +1,26 @@
+# CURRENTLY NOT USED
+# ---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: pv-sql
+# spec:
+#   storageClassName: standard
+#   accessModes:
+#     - ReadWriteOnce
+#   capacity:
+#     storage: 2Gi
+#   hostPath:
+#     path: /tmp/kind-worker
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: pvc-sql
+# spec:
+#   volumeName: pv-sql
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 2Gi
