@@ -670,12 +670,18 @@ sqlDatabase:
     # mysqlFlavor: "mysql"
     ## - Sometimes a database may be restored, here we want to use a baseline:
     ##   https://documentation.red-gate.com/fd/baseline-184127456.html
-    ## HINT: baselineVersion is the ejabberd version of the respective shema,
+    ## HINT: baselineVersion is the ejabberd version of the respective schema,
     ##       e.g. "23.04" or newer.
     ##       The schema must be identical to the official sql schemas from the
     ##       respective release, e.g. for ejabberd 23.04 w/ pgsql w/ new schema:
     ##       https://github.com/processone/ejabberd/blob/23.04/sql/pg.new.sql
     # baselineVersion: "23.04"
+    ## - Additional flags to be parsed into flyway's config file:
+    ##   https://documentation.red-gate.com/fd/configuration-files-184127472.html
+    additionalConfigs: {}
+      # flyway.defaultSchema=
+      # flyway.schemas=
+      # flyway.encoding=
 
 #
 # redis configuration:
