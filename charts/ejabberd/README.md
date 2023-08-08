@@ -20,6 +20,33 @@ SQL databases can be defined within `values.yaml` in `.Values.sqlDatabase`. Also
 check the `.Values.authentication` if you want to store users in SQL databases
 as well.
 
+#### Use the inbuilt flyway integration to manage the SQL database
+
+New in helm-ejabberd version `0.5.0`.
+
+This feature is experimental. Currently, only `mysql` and `pgsql` `sql_type`s
+are supported. Enable it in `.Values.sqlDatabase.flyway.enabled`.
+
+[flyway](https://flywaydb.org/) is a SQL migration tool, which keeps track of
+the database schema versions. We use it to manage ejabberd's SQL database, as
+ejabberd does not perform SQL migrations. If you start with a clean database,
+flyway will also migrate the first schema into the database.
+
+It is also possible to use an existing ejabberd database and integrate it into
+this chart. This may also become handy, if one needed to reset a database.
+
+**Caution**: The database must comply exactly to the schemas from the respective
+ejabberd version in use. The chart's first supported version is `23.04`.
+
+This means, if you use a `postgresql` database, using ejabberd's new sql schema,
+the schema of your database must be exactly like the schema of the respective
+version. For `23.04`, it would be:
+https://github.com/processone/ejabberd/blob/23.04/sql/pg.new.sql
+
+To use an existing database, state your database ejabberd version in
+`.Values.sqlDatabase.flyway.baselineVersion`, the rest will be handled by
+`helm-hooks`.
+
 ### Domain TLS certificates and ACME client
 
 This chart does not support ejabberd's **ACME client**. Instead the chart relies
