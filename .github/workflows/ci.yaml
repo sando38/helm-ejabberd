@@ -16,7 +16,7 @@ jobs:
       matrix:
         dbApp: [pgsql, mariadb, mysql]
         dbSchema: [default, new]
-        dbBaseline: [23.04, none]
+        dbBaseline: [23.01, none]
       fail-fast: false
     steps:
       - name: Check out code
@@ -49,7 +49,7 @@ jobs:
         if: matrix.dbBaseline != 'none'
         shell: bash
         run: |
-          kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+          kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
           if [ "${{ matrix.dbApp }}" = 'pgsql' ]
           then
@@ -82,7 +82,7 @@ jobs:
         if: matrix.dbBaseline != 'none'
         shell: bash
         run: |
-          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
       - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
         shell: bash

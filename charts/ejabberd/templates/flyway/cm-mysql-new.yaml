@@ -12,7 +12,7 @@ metadata:
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": hook-succeeded
 data:
-  V23.04__ejabberd.sql: |
+  V23.01__ejabberd.sql: |
     --
     -- ejabberd, Copyright (C) 2002-2023   ProcessOne
     --
@@ -71,6 +71,7 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_rosteru_sh_user_jid ON rosterusers(server_host(191), username(75), jid(75));
+    CREATE INDEX i_rosteru_sh_username ON rosterusers(server_host(191), username);
     CREATE INDEX i_rosteru_sh_jid ON rosterusers(server_host(191), jid);
 
     CREATE TABLE rostergroups (
@@ -100,7 +101,8 @@ data:
         PRIMARY KEY (server_host(191), jid, grp)
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-    CREATE UNIQUE INDEX i_sr_user_sh_jid_grp ON sr_user(server_host(191), jid, grp);
+    CREATE UNIQUE INDEX i_sr_user_sh_jid_group ON sr_user(server_host(191), jid, grp);
+    CREATE INDEX i_sr_user_sh_jid ON sr_user(server_host(191), jid);
     CREATE INDEX i_sr_user_sh_grp ON sr_user(server_host(191), grp);
 
     CREATE TABLE spool (
@@ -208,6 +210,7 @@ data:
         created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+    CREATE INDEX i_privacy_list_sh_username  USING BTREE ON privacy_list(server_host(191), username);
     CREATE UNIQUE INDEX i_privacy_list_sh_username_name USING BTREE ON privacy_list (server_host(191), username(75), name(75));
 
     CREATE TABLE privacy_list_data (
@@ -230,10 +233,11 @@ data:
         server_host varchar(191) NOT NULL,
         namespace varchar(191) NOT NULL,
         data text NOT NULL,
-        created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+        created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (server_host(191), username, namespace)
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-    CREATE UNIQUE INDEX i_private_storage_sh_sername_namespace USING BTREE ON private_storage(server_host(191), username, namespace);
+    CREATE INDEX i_private_storage_sh_username USING BTREE ON private_storage(server_host(191), username);
 
     -- Not tested in mysql
     CREATE TABLE roster_version (
@@ -346,6 +350,7 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_muc_online_users USING BTREE ON muc_online_users(username(75), server(75), resource(75), name(75), host(75));
+    CREATE INDEX i_muc_online_users_us USING BTREE ON muc_online_users(username(75), server(75));
 
     CREATE TABLE muc_room_subscribers (
        room varchar(191) NOT NULL,
@@ -415,6 +420,7 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_route ON route(domain(75), server_host(75), node(75), pid(75));
+    CREATE INDEX i_route_domain ON route(domain(75));
 
     CREATE TABLE bosh (
         sid text NOT NULL,
@@ -447,7 +453,6 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_push_session_susn ON push_session (server_host(191), username(191), service(191), node(191));
-    CREATE INDEX i_push_session_sh_username_timestamp ON push_session (server_host, username(191), timestamp);
 
     CREATE TABLE mix_channel (
         channel text NOT NULL,
@@ -475,6 +480,7 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_mix_participant ON mix_participant (channel(191), service(191), username(191), domain(191));
+    CREATE INDEX i_mix_participant_chan_serv ON mix_participant (channel(191), service(191));
 
     CREATE TABLE mix_subscription (
         channel text NOT NULL,
@@ -486,7 +492,9 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_mix_subscription ON mix_subscription (channel(153), service(153), username(153), domain(153), node(153));
+    CREATE INDEX i_mix_subscription_chan_serv_ud ON mix_subscription (channel(191), service(191), username(191), domain(191));
     CREATE INDEX i_mix_subscription_chan_serv_node ON mix_subscription (channel(191), service(191), node(191));
+    CREATE INDEX i_mix_subscription_chan_serv ON mix_subscription (channel(191), service(191));
 
     CREATE TABLE mix_pam (
         username text NOT NULL,
@@ -498,6 +506,7 @@ data:
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE UNIQUE INDEX i_mix_pam ON mix_pam (username(191), server_host(191), channel(191), service(191));
+    CREATE INDEX i_mix_pam_us ON mix_pam (username(191), server_host(191));
 
     CREATE TABLE mqtt_pub (
         username varchar(191) NOT NULL,
@@ -514,6 +523,17 @@ data:
         expiry int unsigned NOT NULL,
         UNIQUE KEY i_mqtt_topic_server (topic(191), server_host)
     ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-  # V23.09__ejabberd.sql: |
+  V23.04__ejabberd.sql: |
+    ALTER TABLE rosterusers DROP INDEX i_rosteru_sh_username;
+    ALTER TABLE sr_user DROP INDEX i_sr_user_sh_jid;
+    ALTER TABLE privacy_list DROP INDEX i_privacy_list_sh_username;
+    ALTER TABLE private_storage DROP INDEX i_private_storage_sh_username;
+    ALTER TABLE muc_online_users DROP INDEX i_muc_online_users_us;
+    ALTER TABLE route DROP INDEX i_route_domain;
+    ALTER TABLE mix_participant DROP INDEX i_mix_participant_chan_serv;
+    ALTER TABLE mix_subscription DROP INDEX i_mix_subscription_chan_serv_ud;
+    ALTER TABLE mix_subscription DROP INDEX i_mix_subscription_chan_serv;
+    ALTER TABLE mix_pam DROP INDEX i_mix_pam_us;
+    CREATE INDEX i_push_session_sh_username_timestamp ON push_session (server_host, username(191), timestamp);
 {{- end }}
 {{- end }}
