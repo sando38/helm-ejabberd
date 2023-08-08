@@ -1,3 +1,4 @@
+fullnameOverride: "mariadb"
 architecture: standalone
 auth:
   rootPassword: "ejabberd"
@@ -8,6 +9,4 @@ auth:
     nodeSelector:
       backend: sql
     persistence:
-      enabled: true
-      #existingClaim: "pvc-sql"
-      storageClass: "standard"
+      enabled: false

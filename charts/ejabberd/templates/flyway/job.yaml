@@ -17,6 +17,10 @@ spec:
           image: flyway/flyway
           args:
             - info
+            {{- if .Values.sqlDatabase.flyway.baselineVersion }}
+            - baseline
+            - info
+            {{- end }}
             - repair
             - migrate
             - info

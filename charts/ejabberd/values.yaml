@@ -668,6 +668,14 @@ sqlDatabase:
     ## - Only applies if in .Values.sqlDatabase.config sql_type=mysql either:
     ##   mysql (default) or mariadb.
     # mysqlFlavor: "mysql"
+    ## - Sometimes a database may be restored, here we want to use a baseline:
+    ##   https://documentation.red-gate.com/fd/baseline-184127456.html
+    ## HINT: baselineVersion is the ejabberd version of the respective shema,
+    ##       e.g. "23.04" or newer.
+    ##       The schema must be identical to the official sql schemas from the
+    ##       respective release, e.g. for ejabberd 23.04 w/ pgsql w/ new schema:
+    ##       https://github.com/processone/ejabberd/blob/23.04/sql/pg.new.sql
+    # baselineVersion: "23.04"
 
 #
 # redis configuration:
