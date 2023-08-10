@@ -1,5 +1,7 @@
 {{- if .Values.sqlDatabase.enabled }}
 {{- if .Values.sqlDatabase.flyway.enabled }}
+{{- if (eq (toString .Values.sqlDatabase.config.sql_type) "pgsql") }}
+{{- if not .Values.sqlDatabase.newSqlSchema }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -510,5 +512,7 @@ data:
     DROP INDEX i_mix_subscription_chan_serv_ud;
     DROP INDEX i_mix_subscription_chan_serv;
     DROP INDEX i_mix_pam_us;
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

@@ -1,5 +1,7 @@
 {{- if .Values.sqlDatabase.enabled }}
 {{- if .Values.sqlDatabase.flyway.enabled }}
+{{- if (eq (toString .Values.sqlDatabase.config.sql_type) "mysql") }}
+{{- if .Values.sqlDatabase.newSqlSchema }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -535,5 +537,7 @@ data:
     ALTER TABLE mix_subscription DROP INDEX i_mix_subscription_chan_serv;
     ALTER TABLE mix_pam DROP INDEX i_mix_pam_us;
     CREATE INDEX i_push_session_sh_username_timestamp ON push_session (server_host, username(191), timestamp);
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

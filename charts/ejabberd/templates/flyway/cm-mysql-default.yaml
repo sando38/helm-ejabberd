@@ -1,5 +1,7 @@
 {{- if .Values.sqlDatabase.enabled }}
 {{- if .Values.sqlDatabase.flyway.enabled }}
+{{- if (eq (toString .Values.sqlDatabase.config.sql_type) "mysql") }}
+{{- if not .Values.sqlDatabase.newSqlSchema }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -500,6 +502,7 @@ data:
     ALTER TABLE mix_subscription DROP INDEX i_mix_subscription_chan_serv_ud;
     ALTER TABLE mix_subscription DROP INDEX i_mix_subscription_chan_serv;
     ALTER TABLE mix_pam DROP INDEX i_mix_pam_u;
-  # V23.09__ejabberd.sql: |
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

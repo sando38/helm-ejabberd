@@ -1,5 +1,7 @@
 {{- if .Values.sqlDatabase.enabled }}
 {{- if .Values.sqlDatabase.flyway.enabled }}
+{{- if (eq (toString .Values.sqlDatabase.config.sql_type) "pgsql") }}
+{{- if .Values.sqlDatabase.newSqlSchema }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -712,5 +714,7 @@ data:
     DROP INDEX i_mix_subscription_chan_serv;
     DROP INDEX i_mix_pam_us;
     CREATE INDEX i_push_session_sh_username_timestamp ON push_session USING btree (server_host, username, timestamp);
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
