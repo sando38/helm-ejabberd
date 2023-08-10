@@ -1,0 +1,39 @@
+# https://github.com/processone/ejabberd/blob/master/test/docker/db/mssql/initdb/initdb_mssql.sql
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ejabberd-mssql-initdb
+  namespace: default
+data:
+  initdb_mssql.sql: |
+    SET ANSI_NULLS ON;
+    SET NOCOUNT ON;
+    SET QUOTED_IDENTIFIER ON;
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
+    USE [master];
+    GO
+
+    -- prevent creation when already exists
+    IF DB_ID('ejabberdTest1234') IS NOT NULL
+    BEGIN
+    SET NOEXEC ON;
+    END
+
+    CREATE DATABASE ejabberdTest1234;
+    GO
+
+    USE ejabberdTest1234;
+    GO
+
+    CREATE LOGIN ejabberdTest1234 WITH PASSWORD = 'ejabberdTest1234_';
+    GO
+
+    CREATE USER ejabberdTest1234 FOR LOGIN ejabberdTest1234;
+    GO
+
+    GRANT ALL TO ejabberdTest1234;
+    GO
+
+    GRANT CONTROL ON SCHEMA ::dbo TO ejabberdTest1234;
+    GO

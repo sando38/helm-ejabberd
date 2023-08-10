@@ -8,15 +8,16 @@ on:
       - "main"
 env:
   KIND_VSN: "0.20.0"
+  DB_USER: "ejabberdTest1234"
 
 jobs:
   deploy_test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dbApp: [pgsql, mariadb, mysql]
+        dbApp: [pgsql, mariadb, mysql, mssql]
         dbSchema: [default, new]
-        dbBaseline: [23.01, none]
+        dbBaseline: [23.04, none]
       fail-fast: false
     steps:
       - name: Check out code
@@ -46,15 +47,15 @@ jobs:
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
 
       - name: w/ base schema ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
-        if: matrix.dbBaseline != 'none'
+        if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
         shell: bash
         run: |
           kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
           if [ "${{ matrix.dbApp }}" = 'pgsql' ]
           then
-            initdb="--set primary.initdb.user=ejabberd \
-              --set primary.initdb.password=ejabberd \
+            initdb="--set primary.initdb.user=${{ env.DB_USER }} \
+              --set primary.initdb.password=${{ env.DB_USER }}_ \
               --set primary.initdb.scriptsConfigMap=ejabberd-${{ matrix.dbApp }}-${{ matrix.dbSchema }}"
           elif [ "${{ matrix.dbApp }}" = 'mariadb' ] || [ "${{ matrix.dbApp }}" = 'mysql' ]
           then
@@ -65,11 +66,32 @@ jobs:
             -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml ${initdb:-}
 
       - name: w/o base schema | deploy ${{ matrix.dbApp }} helm chart
-        if: matrix.dbBaseline == 'none'
+        if: matrix.dbBaseline == 'none' && matrix.dbApp != 'mssql'
         shell: bash
         run: |
           helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
             -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml
+
+      - name: w/ base schema ${{ matrix.dbSchema }} | install ${{ matrix.dbApp }}
+        if: matrix.dbApp == 'mssql'
+        shell: bash
+        run: |
+          kubectl apply -f .github/ci/flyway-baseline/mssql-initdb.yaml
+          if [ ! "${{ matrix.dbBaseline }}" = 'none' ]
+          then
+            kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+          fi
+          kubectl apply -f .github/ci/mssql-sts.yaml
+          kubectl rollout status sts ${{ matrix.dbApp }}
+          sleep 30s
+          kubectl describe pod mssql-0
+          kubectl logs sts/${{ matrix.dbApp }}
+          kubectl exec sts/mssql -- /opt/mssql-tools/bin/sqlcmd -U SA -P ${{ env.DB_USER }}_ -S localhost -i /tmp/initdb/initdb_mssql.sql
+          if [ ! "${{ matrix.dbBaseline }}" = 'none' ]
+          then
+            kubectl exec sts/mssql -- /opt/mssql-tools/bin/sqlcmd -U SA -P ${{ env.DB_USER }}_ -S localhost -d ${{ env.DB_USER }} -i /tmp/mssql/V${{ matrix.dbBaseline }}__ejabberd.sql
+            kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+          fi
 
       - name: Check ${{ matrix.dbApp }} database helm chart deployment
         shell: bash
@@ -79,7 +101,7 @@ jobs:
           kubectl logs sts/${{ matrix.dbApp }}
 
       - name: w/ base schema ${{ matrix.dbSchema }} | remove bootstrap configmap
-        if: matrix.dbBaseline != 'none'
+        if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
         shell: bash
         run: |
           kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
@@ -107,6 +129,11 @@ jobs:
               --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
               --set sqlDatabase.flyway.keyValue=?useSSL=false \
               --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
+          elif [ "${{ matrix.dbApp }}" = 'mssql' ]
+          then
+            sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.flyway.keyValue=;integratedSecurity=false;encrypt=false;trustServerCertificate=true;"
           fi
 
           helm install ejabberd --debug \
