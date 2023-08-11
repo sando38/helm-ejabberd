@@ -7,6 +7,7 @@ on:
     branches:
       - "main"
 env:
+  DB: "ejabberdTest1"
   KIND_VSN: "0.20.0"
 
 jobs:
@@ -53,8 +54,8 @@ jobs:
 
           if [ "${{ matrix.dbApp }}" = 'pgsql' ]
           then
-            initdb="--set primary.initdb.user=ejabberd \
-              --set primary.initdb.password=ejabberd \
+            initdb="--set primary.initdb.user=${{ env.DB }} \
+              --set primary.initdb.password=${{ env.DB }} \
               --set primary.initdb.scriptsConfigMap=ejabberd-${{ matrix.dbApp }}-${{ matrix.dbSchema }}"
           elif [ "${{ matrix.dbApp }}" = 'mariadb' ] || [ "${{ matrix.dbApp }}" = 'mysql' ]
           then

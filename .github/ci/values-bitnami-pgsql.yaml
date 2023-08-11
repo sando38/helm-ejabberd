@@ -1,10 +1,10 @@
 global:
   postgresql:
     auth:
-      postgresPassword: "postgres"
-      username: "ejabberd"
-      password: "ejabberd"
-      database: "ejabberd"
+      postgresPassword: "ejabberdTest1"
+      username: "ejabberdTest1"
+      password: "ejabberdTest1"
+      database: "ejabberdTest1"
 
 fullnameOverride: "pgsql"
 architecture: standalone
