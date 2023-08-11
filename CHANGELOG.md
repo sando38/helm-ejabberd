@@ -9,6 +9,8 @@ project adheres to [Semantic Versioning][SemVer].
 ### Added
 - Add flyway as a SQL database manager. The chart currently supports `mysql` and
   `pgsql` `sql_type`s. The feature is experimental.
+- Add a CI workflow to test charts deployment, SQL migrations and basic
+  functions.
 
 ### Fixed
 - Fix an issue with `NodePorts` and the internal ejabberd service.
