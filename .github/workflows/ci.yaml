@@ -3,9 +3,13 @@ on:
   push:
     branches:
       - "*"
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches:
       - "main"
+    paths-ignore:
+      - '**.md'
 env:
   DB: "ejabberdTest1"
   KIND_VSN: "0.20.0"
