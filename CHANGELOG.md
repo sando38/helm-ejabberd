@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+### Added
+- Add `mssql` ejabberd schema templates as well, however there is no test yet to
+  check if it works.
 
 ## 0.5.0 - 2023-08-11
 ### Added
