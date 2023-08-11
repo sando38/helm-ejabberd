@@ -27,6 +27,10 @@ info '  then set the environment variable:'
 info '      ERLANG_NODE_ARG=ejabberd@localhost'
 info '  for improved compatibility. More info can be found here:'
 info '  https://github.com/processone/docker-ejabberd/tree/master/ecs#change-mnesia-node-name'
+info ''
+info 'Thanks to all who made this work possible. Special thanks to Holger Weiß'
+info '@weiss for open ears and brainstorming!'
+info ''
 
 # Clustering variables - include into ejabberdctl container image later
 pod_name="${POD_NAME:-$(hostname -s)}" # e.g. pod-0
