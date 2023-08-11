@@ -52,10 +52,11 @@ jobs:
           helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
             -f .github/ci/values-bitnami-redis.yaml
 
-      - name: w/ base schema ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
+      - name: w/ db baseline ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
         if: matrix.dbBaseline != 'none'
         shell: bash
         run: |
+          echo ">> install ${{ matrix.dbApp }} helm chart"
           kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
           if [ "${{ matrix.dbApp }}" = 'pgsql' ]
@@ -71,30 +72,34 @@ jobs:
           helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
             -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml ${initdb:-}
 
-      - name: w/o base schema | deploy ${{ matrix.dbApp }} helm chart
+          echo ">> check rollout status"
+          kubectl rollout status sts ${{ matrix.dbApp }}
+
+          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+
+      - name: w/o db baseline | deploy ${{ matrix.dbApp }} helm chart
         if: matrix.dbBaseline == 'none'
         shell: bash
         run: |
           helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
             -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml
 
+          echo ">> check rollout status"
+          kubectl rollout status sts ${{ matrix.dbApp }}
+
       - name: Check ${{ matrix.dbApp }} database helm chart deployment
         shell: bash
         run: |
+          echo ">> print resources"
           kubectl get all -o wide
-          kubectl rollout status sts ${{ matrix.dbApp }}
+          echo ">> print database log entries"
           kubectl logs sts/${{ matrix.dbApp }}
-
-      - name: w/ base schema ${{ matrix.dbSchema }} | remove bootstrap configmap
-        if: matrix.dbBaseline != 'none'
-        shell: bash
-        run: |
-          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
       - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
         shell: bash
         working-directory: ./charts/ejabberd
         run: |
+          echo ">> install ejabberd helm chart"
           if [ ! ${{ matrix.dbBaseline }} = 'none' ]
           then baseline="--set sqlDatabase.flyway.baselineVersion=${{ matrix.dbBaseline }}"
           fi
@@ -116,31 +121,32 @@ jobs:
               --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
           fi
 
-          helm install ejabberd --debug \
+          helm install ejabberd \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
             --set listen.stun.enabled=false .
 
+          echo ">> check rollout status"
           kubectl rollout status sts ejabberd
 
       - name: Print resources, verify deployements
         shell: bash
-        run: |
-          kubectl get all -o wide
+        run: kubectl get all -o wide
 
       - name: Print logs from ejabberd sidecar
         shell: bash
-        run: |
-          kubectl logs sts/ejabberd -c watcher
+        run: kubectl logs sts/ejabberd -c watcher
+
+      - name: Print logs from ejabberd container
+        shell: bash
+        run: kubectl logs sts/ejabberd -c ejabberd
 
       - name: Check ejabberd statefulset
         shell: bash
         run: |
-          kubectl logs sts/ejabberd -c ejabberd
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin example.com password
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
-          kubectl logs sts/ejabberd -c ejabberd
 
       # - name: Call ejabberd API
       #   shell: bash
@@ -173,10 +179,13 @@ jobs:
               --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
           fi
 
-          helm upgrade ejabberd --debug \
+          helm upgrade ejabberd \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
             --set listen.stun.enabled=true .
 
+          echo ">> check rollout status"
           kubectl rollout status sts ejabberd
+
+          echo ">> print ejabberd logs"
           kubectl logs sts/ejabberd -c ejabberd
