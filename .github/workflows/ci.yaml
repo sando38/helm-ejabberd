@@ -46,6 +46,12 @@ jobs:
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
 
+      - name: Deploy redis helm chart
+        shell: bash
+        run: |
+          helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
+            -f .github/ci/values-bitnami-redis.yaml
+
       - name: w/ base schema ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
         if: matrix.dbBaseline != 'none'
         shell: bash
