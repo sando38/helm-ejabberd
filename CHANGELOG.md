@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+
+## 0.5.0 - 2023-08-11
 ### Added
 - Add flyway as a SQL database manager. The chart currently supports `mysql` and
   `pgsql` `sql_type`s. The feature is experimental.
