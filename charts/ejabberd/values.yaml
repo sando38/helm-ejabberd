@@ -678,10 +678,10 @@ sqlDatabase:
     # baselineVersion: "23.04"
     ## - Additional flags to be parsed into flyway's config file:
     ##   https://documentation.red-gate.com/fd/configuration-files-184127472.html
-    additionalConfigs: {}
-      # flyway.defaultSchema=
-      # flyway.schemas=
-      # flyway.encoding=
+    additionalConfigs: []
+      # - flyway.defaultSchema=
+      # - flyway.schemas=
+      # - flyway.encoding=
 
 #
 # redis configuration:
