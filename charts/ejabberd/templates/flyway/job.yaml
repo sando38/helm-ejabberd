@@ -1,0 +1,45 @@
+{{- if .Values.sqlDatabase.enabled }}
+{{- if .Values.sqlDatabase.flyway.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ejabberd.fullname" . }}-sql-migration
+  namespace: {{ template "ejabberd.namespace" . }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - name: flyway
+          image: flyway/flyway
+          args:
+            - info
+            {{- if .Values.sqlDatabase.flyway.baselineVersion }}
+            - baseline
+            - info
+            {{- end }}
+            - repair
+            - migrate
+            - info
+          volumeMounts:
+            - mountPath: /flyway/sql
+              name: sql
+            - mountPath: /flyway/conf
+              name: config
+      volumes:
+        - name: sql
+          configMap:
+            {{- if .Values.sqlDatabase.newSqlSchema }}
+            name: {{ include "ejabberd.fullname" . }}-{{ default "pgsql" .Values.sqlDatabase.config.sql_type }}-new
+            {{ else }}
+            name: {{ include "ejabberd.fullname" . }}-{{ default "pgsql" .Values.sqlDatabase.config.sql_type }}-default
+            {{- end }}
+        - name: config
+          secret:
+            secretName: {{ include "ejabberd.fullname" . }}-flyway-config
+      restartPolicy: Never
+{{- end }}
+{{- end }}

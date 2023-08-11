@@ -1,0 +1,10 @@
+fullnameOverride: redis
+
+architecture: standalone
+
+auth:
+  password: "red1sUnsecureP4ss"
+
+master:
+  persistence:
+    enabled: false

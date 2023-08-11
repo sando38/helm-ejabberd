@@ -1,4 +1,4 @@
-name: CI | deploy and test
+name: CI | deploy & test
 on:
   push:
     branches:
@@ -6,55 +6,186 @@ on:
   pull_request:
     branches:
       - "main"
-      - "bitnami"
 env:
+  DB: "ejabberdTest1"
   KIND_VSN: "0.20.0"
+
 jobs:
   deploy_test:
-      runs-on: ubuntu-latest
-      steps:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dbApp: [pgsql, mariadb, mysql]
+        dbSchema: [default, new]
+        dbBaseline: [23.01, none]
+      fail-fast: false
+    steps:
       - name: Check out code
         uses: actions/checkout@v1
+
       - name: Lint helm chart
         shell: bash
         working-directory: ./charts/ejabberd
         run: |
           helm lint .
-      - name: Create KinD cluster
+
+      - name: Create KinD v${{ env.KIND_VSN }} cluster
         shell: bash
         run: |
           curl -Lo /tmp/kind https://kind.sigs.k8s.io/dl/v${{ env.KIND_VSN }}/kind-linux-amd64
           chmod +x /tmp/kind
           /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.github/ci/kind-conf.yml
           kubectl get nodes -o wide
+          echo "DB_APP=$(echo ${{ matrix.dbApp }} | sed -e 's|pgsql|postgresql|')" >> $GITHUB_ENV
+
       - name: Create self signed certificate
         shell: bash
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout server.pem -days 365
           kubectl create secret generic custom-cert --from-file=./server.pem
-      - name: Deploy ejabberd helm chart
+          kubectl label secret custom-cert "helm-ejabberd/watcher=true"
+          kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
+
+      - name: Deploy redis helm chart
+        shell: bash
+        run: |
+          helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
+            -f .github/ci/values-bitnami-redis.yaml
+
+      - name: w/ db baseline ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
+        if: matrix.dbBaseline != 'none'
+        shell: bash
+        run: |
+          echo ">> install ${{ matrix.dbApp }} helm chart"
+          kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+
+          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
+          then
+            initdb="--set primary.initdb.user=${{ env.DB }} \
+              --set primary.initdb.password=${{ env.DB }} \
+              --set primary.initdb.scriptsConfigMap=ejabberd-${{ matrix.dbApp }}-${{ matrix.dbSchema }}"
+          elif [ "${{ matrix.dbApp }}" = 'mariadb' ] || [ "${{ matrix.dbApp }}" = 'mysql' ]
+          then
+            initdb="--set initdbScriptsConfigMap=ejabberd-mysql-${{ matrix.dbSchema }}"
+          fi
+
+          helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
+            -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml ${initdb:-}
+
+          echo ">> check rollout status"
+          kubectl rollout status sts ${{ matrix.dbApp }}
+
+          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+
+      - name: w/o db baseline | deploy ${{ matrix.dbApp }} helm chart
+        if: matrix.dbBaseline == 'none'
+        shell: bash
+        run: |
+          helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
+            -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml
+
+          echo ">> check rollout status"
+          kubectl rollout status sts ${{ matrix.dbApp }}
+
+      - name: Check ${{ matrix.dbApp }} database helm chart deployment
+        shell: bash
+        run: |
+          echo ">> print resources"
+          kubectl get all -o wide
+          echo ">> print database log entries"
+          kubectl logs sts/${{ matrix.dbApp }}
+
+      - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
         shell: bash
         working-directory: ./charts/ejabberd
         run: |
-          helm install ejabberd -f ../../.github/ci/ejabberd-ci.yaml .
+          echo ">> install ejabberd helm chart"
+          if [ ! ${{ matrix.dbBaseline }} = 'none' ]
+          then baseline="--set sqlDatabase.flyway.baselineVersion=${{ matrix.dbBaseline }}"
+          fi
+
+          if [ ${{ matrix.dbSchema }} = 'new' ]
+          then sql_schema="--set sqlDatabase.newSqlSchema=true"
+          fi
+
+          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
+          then
+            sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.flyway.keyValue=?sslmode=disable"
+          elif [ ${{ matrix.dbApp }} = 'mysql' ] || [ ${{ matrix.dbApp }} = 'mariadb' ]
+          then
+            sql_options="--set sqlDatabase.config.sql_type=mysql \
+              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.flyway.keyValue=?useSSL=false \
+              --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
+          fi
+
+          helm install ejabberd \
+            -f ../../.github/ci/values-ejabberd.yaml \
+            ${baseline:-} ${sql_schema:-} ${sql_options:-} \
+            --set listen.stun.enabled=false .
+
+          echo ">> check rollout status"
           kubectl rollout status sts ejabberd
-      - name: Verify deployment
+
+      - name: Print resources, verify deployements
         shell: bash
-        run: |
-          kubectl get all -o wide
-      - name: Check sidecar
+        run: kubectl get all -o wide
+
+      - name: Print logs from ejabberd sidecar
         shell: bash
-        run: |
-          kubectl logs sts/ejabberd -c watcher
+        run: kubectl logs sts/ejabberd -c watcher
+
+      - name: Print logs from ejabberd container
+        shell: bash
+        run: kubectl logs sts/ejabberd -c ejabberd
+
       - name: Check ejabberd statefulset
         shell: bash
         run: |
-          kubectl logs sts/ejabberd -c ejabberd
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin example.com password
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+
       # - name: Call ejabberd API
       #   shell: bash
       #   run: |
       #     echo "127.0.0.1 example.com" | sudo tee -a /etc/hosts
       #     curl -L -d "{}" -X POST -k https://exmaple.com:30443/api/status
+
+      - name: Upgrade ejabberd helm chart
+        shell: bash
+        working-directory: ./charts/ejabberd
+        run: |
+          if [ ! ${{ matrix.dbBaseline }} = 'none' ]
+          then baseline="--set sqlDatabase.flyway.baselineVersion=${{ matrix.dbBaseline }}"
+          fi
+
+          if [ ${{ matrix.dbSchema }} = 'new' ]
+          then sql_schema="--set sqlDatabase.newSqlSchema=true"
+          fi
+
+          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
+          then
+            sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.flyway.keyValue=?sslmode=disable"
+          elif [ ${{ matrix.dbApp }} = 'mysql' ] || [ ${{ matrix.dbApp }} = 'mariadb' ]
+          then
+            sql_options="--set sqlDatabase.config.sql_type=mysql \
+              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.flyway.keyValue=?useSSL=false \
+              --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
+          fi
+
+          helm upgrade ejabberd \
+            -f ../../.github/ci/values-ejabberd.yaml \
+            ${baseline:-} ${sql_schema:-} ${sql_options:-} \
+            --set listen.stun.enabled=true .
+
+          echo ">> check rollout status"
+          kubectl rollout status sts ejabberd
+
+          echo ">> print ejabberd logs"
+          kubectl logs sts/ejabberd -c ejabberd

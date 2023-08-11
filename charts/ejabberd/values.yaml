@@ -500,7 +500,6 @@ shaperRules: {}
   #   normal: all
   # s2s_shaper: fast
 
-
 #
 # install contribution modules
 # https://docs.ejabberd.im/admin/configuration/toplevel/#allow-contrib-modules
@@ -628,14 +627,14 @@ ldap: {}
   # Variables can be found here:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#ldap-backups
   #  -- DNS name of our LDAP server
-  # ldap_servers: [ldap.example.org]
-  # -- Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
-  # ldap_rootdn: "cn=Manager,dc=example,dc=org"
+  # ldap_servers: [ldap.example.com]
+  # -- Bind to LDAP server as "cn=Manager,dc=example,dc=com" with password "secret"
+  # ldap_rootdn: "cn=Manager,dc=example,dc=com"
   # ldap_password: secret
   # ldap_encrypt: tls
   # ldap_port: 6123
   # -- Define the user's base
-  # ldap_base: "ou=Users,dc=example,dc=org"
+  # ldap_base: "ou=Users,dc=example,dc=com"
   # -- We want to authorize users from 'shadowAccount' object class only
   # ldap_filter: "(objectClass=shadowAccount)"
 
@@ -652,12 +651,36 @@ sqlDatabase:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#sql-connect-timeout
   config: {}
     # sql_type: pgsql
-    # sql_server: pgsql
+    # sql_server: localhost
     # sql_port: 5432
     # sql_ssl: false
     # sql_database: ejabberd
     # sql_username: ejabberd
     # sql_password: ejabberd
+  flyway:
+    ## - database connection details are mapped from .Values.sqlDatabase.config
+    enabled: false
+    ## - key/value pairs to parse to the connection, e.g. "?sslmode=disable" or
+    ##   for mysql: "?allowPublicKeyRetrieval=true&useSSL=false"
+    ##   see https://stackoverflow.com/a/50438872
+    keyValue: ""
+    ## - Only applies if in .Values.sqlDatabase.config sql_type=mysql either:
+    ##   mysql (default) or mariadb.
+    # mysqlFlavor: "mysql"
+    ## - Sometimes a database may be restored, here we want to use a baseline:
+    ##   https://documentation.red-gate.com/fd/baseline-184127456.html
+    ## HINT: baselineVersion is the ejabberd version of the respective schema,
+    ##       e.g. "23.04" or newer.
+    ##       The schema must be identical to the official sql schemas from the
+    ##       respective release, e.g. for ejabberd 23.04 w/ pgsql w/ new schema:
+    ##       https://github.com/processone/ejabberd/blob/23.04/sql/pg.new.sql
+    # baselineVersion: "23.04"
+    ## - Additional flags to be parsed into flyway's config file:
+    ##   https://documentation.red-gate.com/fd/configuration-files-184127472.html
+    additionalConfigs: []
+      # - flyway.defaultSchema=
+      # - flyway.schemas=
+      # - flyway.encoding=
 
 #
 # redis configuration:
@@ -669,7 +692,7 @@ redis:
   # Variables can be found here:
   # https://docs.ejabberd.im/admin/configuration/toplevel/#redis-connect-timeout
   config: {}
-    # redis_server: redis
+    # redis_server: localhost
     # redis_port: 6379
     # redis_db: 1
     # redis_password: redis

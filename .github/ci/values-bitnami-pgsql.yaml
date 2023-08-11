@@ -1,0 +1,16 @@
+global:
+  postgresql:
+    auth:
+      postgresPassword: "ejabberdTest1"
+      username: "ejabberdTest1"
+      password: "ejabberdTest1"
+      database: "ejabberdTest1"
+
+fullnameOverride: "pgsql"
+architecture: standalone
+primary:
+  name: primary
+  nodeSelector:
+    backend: sql
+  persistence:
+    enabled: false

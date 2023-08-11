@@ -17,6 +17,9 @@ certFiles:
     enabled: true
     createRbac: true
 
+logging:
+  loglevel: debug
+
 listen:
   http:
     expose: true
@@ -29,3 +32,24 @@ listen:
     options:
       request_handlers:
         /api: mod_http_api
+
+sqlDatabase:
+  enabled: true
+  defaultDb: sql
+  config:
+    sql_database: ejabberdTest1
+    sql_username: ejabberdTest1
+    sql_password: ejabberdTest1
+  flyway:
+    enabled: true
+
+authentification:
+  auth_method:
+   - sql
+
+redis:
+  enabled: true
+  defaultRamDb: redis
+  config:
+    redis_server: redis-master
+    redis_password: red1sUnsecureP4ss

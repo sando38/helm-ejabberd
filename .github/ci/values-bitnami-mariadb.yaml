@@ -1,0 +1,12 @@
+fullnameOverride: "mariadb"
+architecture: standalone
+auth:
+  rootPassword: "ejabberdTest1"
+  database: ejabberdTest1
+  username: "ejabberdTest1"
+  password: "ejabberdTest1"
+  primary:
+    nodeSelector:
+      backend: sql
+    persistence:
+      enabled: false
