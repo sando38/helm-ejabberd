@@ -37,9 +37,9 @@ sqlDatabase:
   enabled: true
   defaultDb: sql
   config:
-    sql_database: ejabberdTest1234
-    sql_username: ejabberdTest1234
-    sql_password: ejabberdTest1234_
+    sql_database: ejabberd
+    sql_username: ejabberd
+    sql_password: ejabberd
   flyway:
     enabled: true
 
