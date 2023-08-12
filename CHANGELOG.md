@@ -8,6 +8,12 @@ project adheres to [Semantic Versioning][SemVer].
 - Add `mssql` ejabberd schema templates as well, however there is no test yet to
   check if it works.
 
+### Changed
+- Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s5`.
+
+### Fixed
+- Fix missing dependency for mssql database driver in container image.
+
 ## 0.5.0 - 2023-08-11
 ### Added
 - Add flyway as a SQL database manager. The chart currently supports `mysql` and
