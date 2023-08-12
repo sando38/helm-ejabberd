@@ -39,7 +39,7 @@ sqlDatabase:
   config:
     sql_database: ejabberdTest1
     sql_username: ejabberdTest1
-    sql_password: ejabberdTest1
+    sql_password: ejabberdTest1Pass
   flyway:
     enabled: true
 

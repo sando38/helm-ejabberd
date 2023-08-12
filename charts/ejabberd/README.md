@@ -11,8 +11,7 @@ All configuration aspects can be found on ejabberd's [documentation page](https:
 
 In general, ejabberd admins should use a **SQL database** in production instead
 of the build-in `mnesia` database. Ejabberd supports [these](https://docs.ejabberd.im/admin/configuration/database/)
-SQL databases, however, this chart supports only type `mysql` and `pgsql`. SQL
-databases need a schema [ready to use](https://docs.ejabberd.im/admin/configuration/database/#database-schema) before the first ejabberd start.
+SQL databases. SQL databases need a schema [ready to use](https://docs.ejabberd.im/admin/configuration/database/#database-schema) before the first ejabberd start.
 
 A SQL database improves the reliability of a cluster, as the builtin `mnesia`
 database is not reliable enough for data persistence, except for testing.
@@ -25,8 +24,8 @@ as well.
 
 New in helm-ejabberd version `0.5.0`.
 
-This feature is experimental. Currently, only `mysql` and `pgsql` `sql_type`s
-are supported. Enable it in `.Values.sqlDatabase.flyway.enabled`.
+This feature is experimental. Currently, only `mysql`, `pgsql` and `mssql`
+`sql_type`s are supported. Enable it in `.Values.sqlDatabase.flyway.enabled`.
 
 [flyway](https://flywaydb.org/) is a SQL migration tool, which keeps track of
 the database schema versions. We use it to manage ejabberd's SQL database, as
