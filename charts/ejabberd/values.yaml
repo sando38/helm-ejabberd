@@ -663,6 +663,8 @@ sqlDatabase:
     ## - key/value pairs to parse to the connection, e.g. "?sslmode=disable" or
     ##   for mysql: "?allowPublicKeyRetrieval=true&useSSL=false"
     ##   see https://stackoverflow.com/a/50438872
+    ##   or for mssql: ";integratedSecurity=false;encrypt=false;trustServerCertificate=true;"
+    ##   ... depending on your use case.
     keyValue: ""
     ## - Only applies if in .Values.sqlDatabase.config sql_type=mysql either:
     ##   mysql (default) or mariadb.

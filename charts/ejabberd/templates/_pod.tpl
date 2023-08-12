@@ -172,9 +172,13 @@
           - name: {{ include "ejabberd.fullname" . }}-config
             mountPath: /opt/ejabberd/conf
             #readOnly: true
-          {{- if .Values.additionalVolumeMounts }}
-            {{- toYaml .Values.additionalVolumeMounts | nindent 10 }}
-          {{- end }}
+        {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "mssql") }}
+          - name: tmpfs
+            mountPath: /tmp/ejabberd
+        {{- end }}
+        {{- if .Values.additionalVolumeMounts }}
+          {{- toYaml .Values.additionalVolumeMounts | nindent 10 }}
+        {{- end }}
         args:
           {{- with .Values.globalArguments }}
           {{- range . }}
@@ -300,6 +304,10 @@
         - name: {{ include "ejabberd.fullname" . }}-config
           configMap:
             name: {{ include "ejabberd.fullname" . }}-config
+        {{- end }}
+        {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "mssql") }}
+        - name: tmpfs
+          emptyDir: {}
         {{- end }}
         {{- if .Values.volumes }}
           {{- toYaml .Values.volumes | nindent 8 }}
