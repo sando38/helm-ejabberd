@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+
+## 0.5.1 - 2023-08-12
 ### Added
-- Add `mssql` ejabberd schema templates as well, however there is no test yet to
-  check if it works.
+- Add support for flyway managed `mssql` database types.
 
 ### Changed
 - Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s5`.
