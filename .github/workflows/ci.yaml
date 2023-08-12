@@ -222,7 +222,7 @@ jobs:
               --set sqlDatabase.flyway.keyValue=;integratedSecurity=false;encrypt=false;trustServerCertificate=true;"
           fi
 
-          helm upgrade ejabberd \
+          helm upgrade ejabberd --no-hooks \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
             --set listen.stun.enabled=true .
