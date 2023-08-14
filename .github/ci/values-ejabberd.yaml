@@ -4,9 +4,6 @@ statefulSet:
 healthCheck:
   tcpPort: 5210
 
-service:
-  type: NodePort
-
 hosts:
   - example.com
 
@@ -23,12 +20,10 @@ logging:
 listen:
   http:
     expose: true
-    nodePort: 30280
     options:
       request_handlers:
         /api: mod_http_api
   https:
-    nodePort: 30443
     options:
       request_handlers:
         /api: mod_http_api

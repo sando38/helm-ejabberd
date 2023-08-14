@@ -9,16 +9,6 @@ nodes:
   extraMounts:
     - hostPath: /tmp/kind-worker
       containerPath: /tmp/kind-worker
-  extraPortMappings:
-  - containerPort: 30222
-    hostPort: 30222
-    protocol: TCP
-  - containerPort: 30280
-    hostPort: 30280
-    protocol: TCP
-  - containerPort: 30443
-    hostPort: 30443
-    protocol: TCP
   labels:
     backend: sql
 - role: worker
