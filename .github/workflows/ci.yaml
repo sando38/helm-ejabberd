@@ -30,13 +30,11 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Lint helm chart
-        shell: bash
         working-directory: ./charts/ejabberd
         run: |
           helm lint .
 
       - name: Create KinD v${{ env.KIND_VSN }} cluster
-        shell: bash
         run: |
           curl -Lo /tmp/kind https://kind.sigs.k8s.io/dl/v${{ env.KIND_VSN }}/kind-linux-amd64
           chmod +x /tmp/kind
@@ -46,7 +44,6 @@ jobs:
 
       # https://kind.sigs.k8s.io/docs/user/loadbalancer/
       - name: Deploy metalLB v${{ env.METALLB_VSN }} for LoadBalancer services
-        shell: bash
         run: |
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v${{ env.METALLB_VSN }}/config/manifests/metallb-native.yaml
           kubectl wait --namespace metallb-system \
@@ -74,7 +71,6 @@ jobs:
           EOF
 
       - name: Create self signed certificate
-        shell: bash
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout server.pem -days 365
           kubectl create secret generic custom-cert --from-file=./server.pem
@@ -82,14 +78,12 @@ jobs:
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
 
       - name: Deploy redis helm chart
-        shell: bash
         run: |
           helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
             -f .github/ci/values-bitnami-redis.yaml
 
       - name: w/ db baseline ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
         if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
-        shell: bash
         run: |
           echo ">> install ${{ matrix.dbApp }} helm chart"
           kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
@@ -114,7 +108,6 @@ jobs:
 
       - name: w/o db baseline | deploy ${{ matrix.dbApp }} helm chart
         if: matrix.dbBaseline == 'none' && matrix.dbApp != 'mssql'
-        shell: bash
         run: |
           helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
             -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml
@@ -122,9 +115,8 @@ jobs:
           echo ">> check rollout status"
           kubectl rollout status sts ${{ matrix.dbApp }}
 
-      - name: deploy ${{ matrix.dbApp }} helm chart
+      - name: Deploy ${{ matrix.dbApp }} resources
         if: matrix.dbApp == 'mssql'
-        shell: bash
         run: |
           echo ">> install ${{ matrix.dbApp }} CI resources"
 
@@ -136,12 +128,12 @@ jobs:
           fi
 
           kubectl apply -f .github/ci/mssql-ci.yaml
-          kubectl rollout status sts ${{ matrix.dbApp }}
 
+          echo ">> check rollout status"
+          kubectl rollout status sts ${{ matrix.dbApp }}
           sleep 30s
 
-          kubectl describe pod mssql-0
-          kubectl logs sts/${{ matrix.dbApp }}
+          echo ">> create initDB for mssql and optionally migrate db baseline"
           kubectl exec sts/mssql -- /opt/mssql-tools/bin/sqlcmd -U SA -P "${{ env.DB_PASS }}" -S localhost -i /tmp/mssql/initdb_mssql.sql
 
           if [ ! "${{ matrix.dbBaseline }}" = 'none' ]
@@ -150,8 +142,7 @@ jobs:
             kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
           fi
 
-      - name: Check ${{ matrix.dbApp }} database helm chart deployment
-        shell: bash
+      - name: Check ${{ matrix.dbApp }} deployment
         run: |
           echo ">> print resources"
           kubectl get all -o wide
@@ -159,7 +150,6 @@ jobs:
           kubectl logs sts/${{ matrix.dbApp }}
 
       - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
-        shell: bash
         working-directory: ./charts/ejabberd
         run: |
           echo ">> install ejabberd helm chart"
@@ -198,32 +188,26 @@ jobs:
           kubectl rollout status sts ejabberd
 
       - name: Print resources, verify deployements
-        shell: bash
         run: kubectl get all -o wide
 
       - name: Print logs from ejabberd sidecar
-        shell: bash
         run: kubectl logs sts/ejabberd -c watcher
 
       - name: Print logs from ejabberd container
-        shell: bash
         run: kubectl logs sts/ejabberd -c ejabberd
 
       - name: Check ejabberd statefulset
-        shell: bash
         run: |
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin example.com password
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
       - name: Call ejabberd API
-        shell: bash
         run: |
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
 
       - name: Upgrade ejabberd helm chart
-        shell: bash
         working-directory: ./charts/ejabberd
         run: |
           if [ ! ${{ matrix.dbBaseline }} = 'none' ]
