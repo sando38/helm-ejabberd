@@ -14,9 +14,6 @@ certFiles:
     enabled: true
     createRbac: true
 
-logging:
-  loglevel: debug
-
 listen:
   http:
     expose: true

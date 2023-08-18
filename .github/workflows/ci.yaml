@@ -182,7 +182,7 @@ jobs:
           helm install ejabberd \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
-            --set listen.stun.enabled=false .
+            --set logging.loglevel=debug .
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
@@ -239,7 +239,7 @@ jobs:
           helm upgrade ejabberd --no-hooks \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
-            --set listen.stun.enabled=true .
+            --set logging.loglevel=info .
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
