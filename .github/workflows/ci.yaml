@@ -15,6 +15,7 @@ env:
   DB_PASS: "ejabberdTest1Pass"
   KIND_VSN: "0.20.0"
   METALLB_VSN: "0.13.7"
+  CHAOS_VSN: "2.6.1"
 
 jobs:
   deploy_test:
@@ -70,9 +71,14 @@ jobs:
             namespace: metallb-system
           EOF
 
+      - name: Setup chaos mesh v${{ env.CHAOS_VSN }}
+        run: |
+          curl -sSL https://mirrors.chaos-mesh.org/v${{ env.CHAOS_VSN }}/install.sh \
+            | bash -s -- --local kind --kind-version v${{ env.KIND_VSN }}
+
       - name: Create self signed certificate
         run: |
-          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout server.pem -days 365
+          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=${{ github.run_id }}.example.com' -keyout server.pem -days 365
           kubectl create secret generic custom-cert --from-file=./server.pem
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
@@ -182,7 +188,8 @@ jobs:
           helm install ejabberd \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
-            --set logging.loglevel=debug .
+            --set logging.loglevel=debug \
+            --set hosts=${{ github.run_id }}.example.com .
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
@@ -199,7 +206,7 @@ jobs:
       - name: Check ejabberd statefulset
         run: |
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin example.com password
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin ${{ github.run_id }}.example.com password
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
       - name: Call ejabberd API
@@ -216,5 +223,34 @@ jobs:
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
 
+          echo ">> print ejabberd logs"
+          kubectl logs sts/ejabberd -c ejabberd
+
+      - name: Run chaos tests
+        run: |
+          kubectl apply -f .github/ci/chaos-mesh/chaos.yaml
+          echo ">> sleep shortly"
+          sleep 10s
+
+      - name: Push some commands to ejabberd
+        run: |
+          echo ">> print resources"
+          kubectl get all -o wide
+
+          echo ">> check rollout status"
+          kubectl rollout status sts ejabberd
+
+          echo ">> Call ejabberd API"
+          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+
+          L="1 2 3 4 5 6 7 8 9"
+          for l in $L
+          do
+            kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register user$l ${{ github.run_id }}.example.com password$l
+          done
+
+      - name: Print ejabberd logs
+        run: |
           echo ">> print ejabberd logs"
           kubectl logs sts/ejabberd -c ejabberd

@@ -4,9 +4,6 @@ statefulSet:
 healthCheck:
   tcpPort: 5210
 
-hosts:
-  - example.com
-
 certFiles:
   secretName:
     - custom-cert
