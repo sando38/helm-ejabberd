@@ -189,7 +189,7 @@ jobs:
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
             --set logging.loglevel=debug \
-            --set hosts=${{ github.run_id }}.example.com .
+            --set hosts[0]=${{ github.run_id }}.example.com .
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
