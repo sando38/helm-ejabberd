@@ -73,11 +73,15 @@ jobs:
 
       - name: Smoke Test
         run: |
-          docker run --rm -d --name ejabberd \
+          docker run -d --name ejabberd \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
           docker exec ejabberd ejabberdctl started
           docker exec ejabberd ejabberdctl status
           docker stop ejabberd
+
+      - name: Print container logs
+        if: failure() || success()
+        run: docker logs ejabberd
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2
