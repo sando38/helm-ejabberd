@@ -164,7 +164,9 @@ data:
 
   ejabberd.yml: |-
     hosts:
-    {{- toYaml .Values.hosts | nindent 6 }}
+    {{- range $name := .Values.hosts }}
+      - {{ $name }}
+    {{- end }}
     acme:
       auto: false
     ca_file: /opt/ejabberd/cacert/cacert.pem
