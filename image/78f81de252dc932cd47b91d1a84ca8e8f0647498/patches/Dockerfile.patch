@@ -1,16 +1,39 @@
 diff --git a/.github/container/Dockerfile b/.github/container/Dockerfile
-index adbcdb98d..9eac26029 100644
+index adbcdb98d..75b18c07e 100644
 --- a/.github/container/Dockerfile
 +++ b/.github/container/Dockerfile
-@@ -5,6 +5,7 @@ ARG ELIXIR_VSN='1.14.4'
+@@ -4,7 +4,10 @@ ARG OTP_VSN='25.3'
+ ARG ELIXIR_VSN='1.14.4'
  ## specifc ARGs for METHOD='package'
  ARG ALPINE_VSN='3.17'
++## specifc ARGs for elector
++ARG GO_VSN='1.21'
  ## general ARGs
 +ARG VARIANT='hardened'
  ARG UID='9000'
  ARG USER='ejabberd'
  ARG HOME="opt/$USER"
-@@ -21,6 +22,7 @@ RUN apk -U add --no-cache \
+@@ -12,6 +15,19 @@ ARG METHOD='direct'
+ ARG BUILD_DIR="/$USER"
+ ARG VERSION='master'
+
++################################################################################
++#' METHOD='direct' - build and install ejabberd directly from source
++FROM docker.io/golang:${GO_VSN}-alpine AS elector
++RUN apk -U add --no-cache \
++        build-base \
++        git
++
++WORKDIR /elector
++RUN git clone https://github.com/leonnicolas/k8s-elector \
++        --branch update-packages --depth 1 .
++
++RUN make build-linux
++
+ ################################################################################
+ #' METHOD='direct' - build and install ejabberd directly from source
+ FROM docker.io/erlang:${OTP_VSN}-alpine AS direct
+@@ -21,6 +37,7 @@ RUN apk -U add --no-cache \
          automake \
          bash \
          build-base \
@@ -18,7 +41,7 @@ index adbcdb98d..9eac26029 100644
          curl \
          expat-dev \
          file \
-@@ -48,7 +50,19 @@ RUN mix local.hex --force \
+@@ -48,7 +65,19 @@ RUN mix local.hex --force \
  ARG BUILD_DIR
  COPY / $BUILD_DIR/
 
@@ -38,7 +61,7 @@ index adbcdb98d..9eac26029 100644
  RUN mv .github/container/ejabberdctl.template . \
      && ./autogen.sh \
      && ./configure --with-rebar=mix --enable-all \
-@@ -67,9 +81,9 @@ RUN cp -p $BUILD_DIR/tools/captcha*.sh $HOME-$VERSION/lib
+@@ -67,9 +96,9 @@ RUN cp -p $BUILD_DIR/tools/captcha*.sh $HOME-$VERSION/lib
  RUN find "$HOME-$VERSION/bin" -name 'ejabberd' -delete \
      && find "$HOME-$VERSION/releases" -name 'COOKIE' -delete
 
@@ -51,7 +74,7 @@ index adbcdb98d..9eac26029 100644
          \ncertfiles: \
          \n  - /opt/ejabberd/conf/server.pem' "$HOME/conf/ejabberd.yml"
 
-@@ -117,16 +131,7 @@ RUN export PEM=$HOME/conf/server.pem \
+@@ -117,16 +146,7 @@ RUN export PEM=$HOME/conf/server.pem \
              -subj "/CN=localhost"
 
  RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
@@ -69,7 +92,7 @@ index adbcdb98d..9eac26029 100644
      && scanelf --needed --nobanner --format '%n#p' --recursive $home_root_dir \
          | tr ',' '\n' \
          | sort -u \
-@@ -134,6 +139,8 @@ RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
+@@ -134,6 +154,8 @@ RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
          | sed -e "s|so:libc.so|so:libc.musl-$(uname -m).so.1|" \
              > /tmp/runDeps
 
@@ -78,9 +101,12 @@ index adbcdb98d..9eac26029 100644
  ARG UID
  RUN chown -R $UID:$UID $HOME
 
-@@ -157,7 +164,9 @@ RUN apk -U upgrade --available --no-cache \
+@@ -156,8 +178,12 @@ COPY --from=ejabberd /tmp/runDeps /tmp/runDeps
+ RUN apk -U upgrade --available --no-cache \
      && apk add --no-cache \
          $(cat /tmp/runDeps) \
++        gettext \
++        jq \
          so:libcap.so.2 \
 -        tini
 +        so:libtdsodbc.so.0 \
@@ -89,7 +115,7 @@ index adbcdb98d..9eac26029 100644
 
  ARG USER
  ARG UID
-@@ -168,12 +177,39 @@ RUN addgroup $USER -g $UID \
+@@ -168,11 +194,40 @@ RUN addgroup $USER -g $UID \
  ################################################################################
  #' Build together production image
  FROM scratch AS prod
@@ -98,7 +124,8 @@ index adbcdb98d..9eac26029 100644
 
  COPY --from=runtime / /
  COPY --from=ejabberd /rootfs /
-
++COPY --from=elector /elector/elector /usr/local/bin/elector
++
 +################################################################################
 +#' Remove unneccessary packages from runtime environment
 +FROM runtime AS runtime-hardened
@@ -121,17 +148,17 @@ index adbcdb98d..9eac26029 100644
 +
 +COPY --from=runtime-hardened / /
 +COPY --from=ejabberd /rootfs /
++COPY --from=elector /elector/elector /usr/local/bin/elector
 +
 +################################################################################
 +#' Build together production image
 +FROM ${VARIANT} AS final
 +ARG USER
 +ARG HOME
-+
+
  HEALTHCHECK \
      --interval=1m \
-     --timeout=5s \
-@@ -186,5 +222,5 @@ USER $USER
+@@ -186,5 +241,5 @@ USER $USER
  VOLUME ["/$HOME"]
  EXPOSE 1883 4369-4399 5210 5222 5269 5280 5443
 

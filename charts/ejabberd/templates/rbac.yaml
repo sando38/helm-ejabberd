@@ -23,3 +23,51 @@ subjects:
   namespace: {{ template "ejabberd.namespace" . }}
 {{- end }}
 {{- end }}
+{{- if .Values.elector.enabled }}
+{{- if .Values.elector.createRbac }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: ['']
+  resources: ['pods']
+  verbs: ['get', 'watch', 'list', 'patch'] #, 'update']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ejabberd-read-pods
+subjects:
+- kind: ServiceAccount
+  name: {{ include "ejabberd.serviceAccountName" . }}
+  namespace: {{ template "ejabberd.namespace" . }}
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: leases
+rules:
+- apiGroups: ['coordination.k8s.io']
+  resources: ['leases']
+  verbs: ['get', 'watch', 'list', 'update', 'create']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ejabberd-update-leases
+subjects:
+- kind: ServiceAccount
+  name: {{ include "ejabberd.serviceAccountName" . }}
+  namespace: {{ template "ejabberd.namespace" . }}
+roleRef:
+  kind: Role
+  name: leases
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
+{{- end }}
