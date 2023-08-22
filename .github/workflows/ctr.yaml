@@ -3,7 +3,7 @@ name: Build & publish ejabberd ctr image
 on:
   push:
     branches:
-      - "*"
+      - "**"
     paths:
       - 'image/tag'
   workflow_dispatch:
