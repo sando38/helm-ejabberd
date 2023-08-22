@@ -64,6 +64,8 @@ jobs:
             METHOD=direct
             VERSION=${{ env.TAG }}
             VARIANT=hardened
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           context: ./ejabberd-source/.
           file: ./ejabberd-source/.github/container/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
@@ -98,6 +100,8 @@ jobs:
             METHOD=direct
             VERSION=${{ env.TAG }}
             VARIANT=hardened
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           context: ./ejabberd-source/.
           file: ./ejabberd-source/.github/container/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}

@@ -100,14 +100,6 @@ statefulSet:
     # initialDelaySeconds: 5
     # periodSeconds: 5
 
-#
-# Override the default healthCheck port `.Values.listen.c2s.port`
-# -- Value is ignored if `.Values.statefulSet.readinessProbe` or
-#    `.Values.statefulSet.livenessProbe` is defined
-#
-healthCheck: {}
-  # tcpPort: 5210
-
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -184,6 +176,15 @@ service:
   #   # labels: {}
   #   # annotations: {}
   #   # spec: {}
+
+#
+# Leader elector
+#
+elector:
+  enabled: true
+  createRbac: true
+  name: "ejabberd"
+  url: "127.0.0.1:4040"
 
 #
 # Define the erlang cookie to be used for clustering

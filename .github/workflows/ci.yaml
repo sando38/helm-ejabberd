@@ -155,6 +155,10 @@ jobs:
           echo ">> print database log entries"
           kubectl logs sts/${{ matrix.dbApp }}
 
+      - name: Use custom run scripts
+        run: |
+          kubectl create cm run-ejabberd --from-file=./image/78f81de252dc932cd47b91d1a84ca8e8f0647498/scripts/run.sh
+
       - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
         working-directory: ./charts/ejabberd
         run: |
@@ -188,8 +192,8 @@ jobs:
           helm install ejabberd \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
-            --set logging.loglevel=debug \
-            --set hosts[0]=${{ github.run_id }}-${{ strategy.job-index }}.example.com .
+            --set hosts[0]=${{ github.run_id }}-${{ strategy.job-index }}.example.com \
+            --set logging.loglevel=debug .
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
@@ -250,7 +254,20 @@ jobs:
             kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register user$l ${{ github.run_id }}-${{ strategy.job-index }}.example.com password$l
           done
 
-      - name: Print ejabberd logs
+      - name: Print ejabberd logs - ejabberd-0
+        if: failure() || success()
         run: |
           echo ">> print ejabberd logs"
-          kubectl logs sts/ejabberd -c ejabberd
+          kubectl logs ejabberd-0 -c ejabberd
+
+      - name: Print ejabberd logs - ejabberd-1
+        if: failure() || success()
+        run: |
+          echo ">> print ejabberd logs"
+          kubectl logs ejabberd-1 -c ejabberd
+
+      - name: Print ejabberd logs - ejabberd-2
+        if: failure() || success()
+        run: |
+          echo ">> print ejabberd logs"
+          kubectl logs ejabberd-2 -c ejabberd

@@ -50,11 +50,6 @@
           privileged: false
           capabilities:
             drop: [ALL]
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         command: ["/bin/sh", "-c"]
         args:
           - >-
@@ -98,8 +93,11 @@
           {{- if .Values.statefulSet.readinessProbe }}
           {{- toYaml .Values.statefulSet.readinessProbe | nindent 10 }}
           {{- else }}
-          tcpSocket:
-            port: {{ default .Values.listen.c2s.port .Values.healthCheck.tcpPort }}
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - healthcheck.sh
           {{- if .Values.certFiles.sideCar.enabled }}
           initialDelaySeconds: {{ default 10 .Values.certFiles.sideCar.waitPeriod }}
           {{- else }}
@@ -111,8 +109,11 @@
           {{- if .Values.statefulSet.livenessProbe }}
           {{- toYaml .Values.statefulSet.livenessProbe | nindent 10 }}
           {{- else }}
-          tcpSocket:
-            port:  {{ default .Values.listen.c2s.port .Values.healthCheck.tcpPort }}
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - healthcheck.sh
           {{- if .Values.certFiles.sideCar.enabled }}
           initialDelaySeconds: {{ default 10 .Values.certFiles.sideCar.waitPeriod }}
           {{- else }}
@@ -191,6 +192,18 @@
           {{- end }}
           {{- end }}
         env:
+          - name: K8S_CLUSTERING
+            value: "true"
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: ELECTOR_ENABLED
+            value: "{{ default "true" .Values.elector.enabled }}"
+          - name: ELECTION_NAME
+            value: "{{ default "ejabberd" .Values.elector.name }}"
+          - name: ELECTION_URL
+            value: "{{ default "127.0.0.1:4040" .Values.elector.url }}"
           - name: ERLANG_COOKIE
             value: {{ default "erlangCookie" .Values.erlangCookie }}
         {{- if .Values.service.headless }}

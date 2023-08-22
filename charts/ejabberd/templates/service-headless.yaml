@@ -18,7 +18,7 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None
-  publishNotReadyAddresses: true
+  publishNotReadyAddresses: false
   {{- with .Values.service.headless.spec }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
