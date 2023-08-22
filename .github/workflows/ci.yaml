@@ -78,7 +78,7 @@ jobs:
 
       - name: Create self signed certificate
         run: |
-          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=${{ github.run_id }}.example.com' -keyout server.pem -days 365
+          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=${{ github.run_id }}-${{ strategy.job-index }}.example.com' -keyout server.pem -days 365
           kubectl create secret generic custom-cert --from-file=./server.pem
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
@@ -189,7 +189,7 @@ jobs:
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
             --set logging.loglevel=debug \
-            --set hosts[0]=${{ github.run_id }}.example.com .
+            --set hosts[0]=${{ github.run_id }}-${{ strategy.job-index }}.example.com .
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
@@ -206,7 +206,7 @@ jobs:
       - name: Check ejabberd statefulset
         run: |
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin ${{ github.run_id }}.example.com password
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin ${{ github.run_id }}-${{ strategy.job-index }}.example.com password
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
       - name: Call ejabberd API
@@ -247,7 +247,7 @@ jobs:
           L="1 2 3 4 5 6 7 8 9"
           for l in $L
           do
-            kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register user$l ${{ github.run_id }}.example.com password$l
+            kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register user$l ${{ github.run_id }}-${{ strategy.job-index }}.example.com password$l
           done
 
       - name: Print ejabberd logs
