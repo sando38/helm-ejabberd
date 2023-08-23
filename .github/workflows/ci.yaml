@@ -196,10 +196,24 @@ jobs:
             --set logging.loglevel=debug .
 
           echo ">> check rollout status"
-          kubectl rollout status sts ejabberd
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 105s
+
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 30s
+            else
+             break
+            fi
+          done
 
       - name: Print resources, verify deployements
-        run: kubectl get all -o wide
+        run: kubectl get all -o wide -l app.kubernetes.io/name=ejabberd
 
       - name: Print logs from ejabberd sidecar
         run: kubectl logs sts/ejabberd -c watcher
@@ -224,30 +238,53 @@ jobs:
           helm upgrade ejabberd --no-hooks --reuse-values \
             --set logging.loglevel=info .
 
-          echo ">> check rollout status"
-          kubectl rollout status sts ejabberd
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 15s
 
-          echo ">> print ejabberd logs"
-          kubectl logs sts/ejabberd -c ejabberd
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 15s
+            else
+             break
+            fi
+          done
 
-      - name: Run chaos tests
+      - name: Run chaos tests (scheduled pod-failure)
         run: |
-          kubectl apply -f .github/ci/chaos-mesh/chaos.yaml
-          echo ">> sleep shortly"
-          sleep 10s
+          kubectl apply -f .github/ci/chaos-mesh/chaos-1.yaml
 
-          echo ">> print resources"
-          kubectl get all -o wide
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 15s
 
-          echo ">> check rollout status"
-          kubectl rollout status sts ejabberd
+          while [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+          do
+            for (( i=1; i != 10; i++ ))
+            do
+                echo "Check number $i"
+                kubectl get pods -l app.kubernetes.io/name=ejabberd
+                kubectl logs --all-containers=true sts/ejabberd
+                sleep 15s
+            done
+          done
 
       - name: Push some commands to ejabberd
         run: |
           echo ">> Call ejabberd API"
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+
+      - name: Delete chaos tests (scheduled pod-failure)
+        run: |
+          kubectl delete -f .github/ci/chaos-mesh/chaos-1.yaml
 
       - name: Scale down ejabberd
         working-directory: ./charts/ejabberd
@@ -255,16 +292,28 @@ jobs:
           helm upgrade ejabberd --no-hooks --reuse-values \
             --set statefulSet.replicas=1 .
 
-          echo ">> check rollout status"
-          kubectl rollout status sts ejabberd
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 15s
 
-          echo ">> print resources"
-          kubectl get all -o wide
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '1/1' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 15s
+            else
+             break
+            fi
+          done
 
       - name: Call ejabberd API
         run: |
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           kubectl exec ejabberd-0 -c ejabberd -- ejabberdctl list_cluster
 
       - name: Scale up ejabberd
@@ -273,16 +322,84 @@ jobs:
           helm upgrade ejabberd --no-hooks --reuse-values \
             --set statefulSet.replicas=3 .
 
-          echo ">> check rollout status"
-          kubectl rollout status sts ejabberd
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 75s
 
-          echo ">> print resources"
-          kubectl get all -o wide
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 30s
+            else
+             break
+            fi
+          done
 
       - name: Call ejabberd API
         run: |
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+
+      - name: Run chaos tests (pod-kill <= 66%)
+        run: |
+          kubectl apply -f .github/ci/chaos-mesh/chaos-2.yaml
+
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 75s
+
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 30s
+            else
+             break
+            fi
+          done
+
+      - name: Call ejabberd API
+        run: |
+          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+
+      - name: Run chaos tests (pod-kill 100%)
+        run: |
+          kubectl apply -f .github/ci/chaos-mesh/chaos-3.yaml
+
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 105s
+
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 30s
+            else
+             break
+            fi
+          done
+
+      - name: Call ejabberd API
+        run: |
+          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
       - name: Print final resources

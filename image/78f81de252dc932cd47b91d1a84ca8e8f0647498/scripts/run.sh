@@ -52,7 +52,7 @@ fi
 
 if [ "${ELECTOR_ENABLED:-false}" = 'true' ]
 then
-    sleep "$election_ttl"
+    sleep "$election_ttl" # to ensure invalidation of old leases
     elector -election "$election_name" \
             -namespace "$pod_namespace" \
             -http "$election_url" \
@@ -84,17 +84,20 @@ _join_cluster_elector() {
 
             if [ ! -z "$cluster_pod_names" ] && [ ! "$cluster_pod_names" = 'NXDOMAIN' ]
             then
-                export join_pod_name="$(echo $cluster_pod_names | awk 'END{ print $1 }')"
-                info "==> Found other healthy pods, joining $join_pod_name ..."
-                ejabberdctl join_cluster "${join_pod_name}" && return 0
-                sleep 5
+                info "==> Found other healthy pods, but we are leader. Exiting..."
+                return 1
+                ## This does not work, yet, probably due to healthchecks...
+                # export join_pod_name="$(echo $cluster_pod_names | awk 'END{ print $1 }')"
+                # info "==> Found other healthy pods, joining $join_pod_name ..."
+                # ejabberdctl join_cluster "${join_pod_name}" && return 0
+                # sleep 5
             else
                 info "==> Getting ready and waiting for others to join ..."
                 return 0
             fi
         else
             leader_pod="$(_leader_pod)"
-            info "Trying to join ${leader_pod}..."
+            info "==> Trying to join ${leader_pod}..."
             ejabberdctl join_cluster "${leader_pod}" && return 0
             sleep 5
         fi
@@ -104,11 +107,11 @@ _join_cluster_elector() {
 _join_cluster_standalone() {
     if [ -z "$cluster_pod_names" ] || [ "$cluster_pod_names" = 'NXDOMAIN' ]
     then
-        info 'No ejabberd cluster detected, continuing ...'
+        info '==> No ejabberd cluster detected, continuing ...'
     else
-        info 'ejabberd cluster detected ...'
+        info '==> ejabberd cluster detected ...'
         export join_pod_name="$(echo $cluster_pod_names | awk 'END{ print $1 }')"
-        info "Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
+        info "==> Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
         if [ -z "${CTL_ON_START-}" ]
         then export CTL_ON_START="join_cluster $sts_name@$join_pod_name"
         else export CTL_ON_START="join_cluster $sts_name@$join_pod_name ; $CTL_ON_START"
@@ -126,7 +129,6 @@ _shutdown() {
     if [ "$pid_ejabberd" -ne 0 ]
     then
         info "==> Gracefully shut down ejabberd pod $sts_name@$pod_endpoint_name ..."
-        NO_WARNINGS=true ejabberdctl leave_cluster "$sts_name@$pod_endpoint_name"
         ejabberdctl stop > /dev/null
         ejabberdctl stopped > /dev/null
         kill -s TERM "$pid_ejabberd"
