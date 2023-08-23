@@ -210,35 +210,7 @@ jobs:
       - name: Upgrade ejabberd helm chart
         working-directory: ./charts/ejabberd
         run: |
-          if [ ! ${{ matrix.dbBaseline }} = 'none' ]
-          then baseline="--set sqlDatabase.flyway.baselineVersion=${{ matrix.dbBaseline }}"
-          fi
-
-          if [ ${{ matrix.dbSchema }} = 'new' ]
-          then sql_schema="--set sqlDatabase.newSqlSchema=true"
-          fi
-
-          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
-          then
-            sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
-              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
-              --set sqlDatabase.flyway.keyValue=?sslmode=disable"
-          elif [ ${{ matrix.dbApp }} = 'mysql' ] || [ ${{ matrix.dbApp }} = 'mariadb' ]
-          then
-            sql_options="--set sqlDatabase.config.sql_type=mysql \
-              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
-              --set sqlDatabase.flyway.keyValue=?useSSL=false \
-              --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
-          elif [ "${{ matrix.dbApp }}" = 'mssql' ]
-          then
-            sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
-              --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
-              --set sqlDatabase.flyway.keyValue=;integratedSecurity=false;encrypt=false;trustServerCertificate=true;"
-          fi
-
-          helm upgrade ejabberd --no-hooks \
-            -f ../../.github/ci/values-ejabberd.yaml \
-            ${baseline:-} ${sql_schema:-} ${sql_options:-} \
+          helm upgrade ejabberd --no-hooks --reuse-values \
             --set logging.loglevel=info .
 
           echo ">> check rollout status"
