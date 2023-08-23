@@ -43,6 +43,7 @@ sts_name="$(echo $pod_name | sed 's|-[0-9]\+||g')"
 ready_file="$HOME/.ejabberd_ready"
 election_name="${ELECTION_NAME:-ejabberd}"
 election_url="${ELECTION_URL:-127.0.0.1:4040}"
+election_ttl="${ELECTION_TTL:-10s}"
 
 if [ -e "$ready_file" ]
 then
@@ -51,7 +52,11 @@ fi
 
 if [ "${ELECTOR_ENABLED:-false}" = 'true' ]
 then
-    elector -election "$election_name" -namespace "$pod_namespace" -http "$election_url" &
+    sleep "$election_ttl"
+    elector -election "$election_name" \
+            -namespace "$pod_namespace" \
+            -http "$election_url" \
+            -ttl "$election_ttl" &
     export pid_elector=$!
     info "==> Wait for elector sidecar to be available on $election_url ..."
     while ! nc -z "$election_url"; do sleep 1; done
