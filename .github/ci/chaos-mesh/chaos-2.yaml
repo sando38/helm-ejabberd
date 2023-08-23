@@ -1,0 +1,15 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-kill-ejabberd
+  annotations:
+    experiment.chaos-mesh.org/pause: "true"
+spec:
+  action: pod-kill
+  mode: random-max-percent
+  value: '66'
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      'app.kubernetes.io/name': 'ejabberd'
