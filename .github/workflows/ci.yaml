@@ -254,20 +254,18 @@ jobs:
             kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register user$l ${{ github.run_id }}-${{ strategy.job-index }}.example.com password$l
           done
 
+      - name: Print resources
+        if: failure() || success()
+        run: kubectl get all -o wide
+
       - name: Print ejabberd logs - ejabberd-0
         if: failure() || success()
-        run: |
-          echo ">> print ejabberd logs"
-          kubectl logs ejabberd-0 -c ejabberd
+        run: kubectl logs ejabberd-0 -c ejabberd
 
       - name: Print ejabberd logs - ejabberd-1
         if: failure() || success()
-        run: |
-          echo ">> print ejabberd logs"
-          kubectl logs ejabberd-1 -c ejabberd
+        run: kubectl logs ejabberd-1 -c ejabberd
 
       - name: Print ejabberd logs - ejabberd-2
         if: failure() || success()
-        run: |
-          echo ">> print ejabberd logs"
-          kubectl logs ejabberd-2 -c ejabberd
+        run: kubectl logs ejabberd-2 -c ejabberd
