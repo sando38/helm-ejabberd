@@ -37,7 +37,8 @@ redis:
     redis_server: redis-master
     redis_password: red1sUnsecureP4ss
 
-
+persistence:
+  enabled: true
 
 volumes:
 - name: run-ejabberd
