@@ -236,25 +236,56 @@ jobs:
           echo ">> sleep shortly"
           sleep 10s
 
-      - name: Push some commands to ejabberd
-        run: |
           echo ">> print resources"
           kubectl get all -o wide
 
           echo ">> check rollout status"
           kubectl rollout status sts ejabberd
 
+      - name: Push some commands to ejabberd
+        run: |
           echo ">> Call ejabberd API"
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
-          L="1 2 3 4 5 6 7 8 9"
-          for l in $L
-          do
-            kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register user$l ${{ github.run_id }}-${{ strategy.job-index }}.example.com password$l
-          done
+      - name: Scale down ejabberd
+        working-directory: ./charts/ejabberd
+        run: |
+          helm upgrade ejabberd --no-hooks --reuse-values \
+            --set statefulSet.replicas=1 .
 
-      - name: Print resources
+          echo ">> check rollout status"
+          kubectl rollout status sts ejabberd
+
+          echo ">> print resources"
+          kubectl get all -o wide
+
+      - name: Call ejabberd API
+        run: |
+          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl exec ejabberd-0 -c ejabberd -- ejabberdctl list_cluster
+
+      - name: Scale up ejabberd
+        working-directory: ./charts/ejabberd
+        run: |
+          helm upgrade ejabberd --no-hooks --reuse-values \
+            --set statefulSet.replicas=3 .
+
+          echo ">> check rollout status"
+          kubectl rollout status sts ejabberd
+
+          echo ">> print resources"
+          kubectl get all -o wide
+
+      - name: Call ejabberd API
+        run: |
+          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+
+      - name: Print final resources
         if: failure() || success()
         run: kubectl get all -o wide
 
