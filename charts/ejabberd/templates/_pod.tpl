@@ -114,11 +114,7 @@
             - /bin/sh
             - -c
             - healthcheck.sh
-          {{- if .Values.certFiles.sideCar.enabled }}
-          initialDelaySeconds: {{ default 10 .Values.certFiles.sideCar.waitPeriod }}
-          {{- else }}
-          initialDelaySeconds: 10
-          {{- end }}
+          initialDelaySeconds: 20
           periodSeconds: 15
           {{- end }}
         lifecycle:
