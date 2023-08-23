@@ -2,7 +2,6 @@
 
 set -e
 set -u
-set -x
 
 myself=${0##*/}
 
@@ -77,8 +76,6 @@ _join_cluster_elector() {
         if [ "$(wget -cq "$election_url" -O - | jq .is_leader)" == "true" ]
         then
             info "==> $sts_name@$pod_endpoint_name is elected as leader ..."
-
-            echo "$cluster_pod_names"
 
             if [ ! -z "$cluster_pod_names" ] && [ ! "$cluster_pod_names" = 'NXDOMAIN' ]
             then
