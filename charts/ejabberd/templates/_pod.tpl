@@ -89,6 +89,7 @@
           {{- with .Values.resources }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
+        command: ["/sbin/tini", "--", "/bin/sh", "-c", "run.sh"]
         startupProbe:
           exec:
             command:
@@ -173,6 +174,18 @@
           - name: {{ include "ejabberd.fullname" . }}-config
             mountPath: /opt/ejabberd/conf
             #readOnly: true
+          - name: {{ include "ejabberd.fullname" . }}-startup-scripts
+            mountPath: /usr/local/bin/ejabberdctl
+            subPath: ejabberdctl
+            readOnly: true
+          - name: {{ include "ejabberd.fullname" . }}-startup-scripts
+            mountPath: /usr/local/bin/healthcheck.sh
+            subPath: healthcheck.sh
+            readOnly: true
+          - name: {{ include "ejabberd.fullname" . }}-startup-scripts
+            mountPath: /usr/local/bin/run.sh
+            subPath: run.sh
+            readOnly: true
         {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "mssql") }}
           - name: tmpfs
             mountPath: /tmp/ejabberd
@@ -322,6 +335,17 @@
         - name: tmpfs
           emptyDir: {}
         {{- end }}
+        - name: {{ include "ejabberd.fullname" . }}-startup-scripts
+          configMap:
+            name: {{ include "ejabberd.fullname" . }}-startup-scripts
+            defaultMode: 0755
+            items:
+            - key: run.sh
+              path: run.sh
+            - key: ejabberdctl
+              path: ejabberdctl
+            - key: healthcheck.sh
+              path: healthcheck.sh
         {{- if .Values.volumes }}
           {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}

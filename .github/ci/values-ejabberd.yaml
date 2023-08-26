@@ -39,20 +39,3 @@ redis:
 
 persistence:
   enabled: true
-
-volumes:
-- name: run-ejabberd
-  configMap:
-    name: run-ejabberd
-    defaultMode: 0755
-    items:
-    - key: run.sh
-      path: run.sh
-#     - key: ejabberdctl
-#       path: ejabberdctl
-
-additionalVolumeMounts:
-- name: run-ejabberd
-  mountPath: /usr/local/bin/run.sh
-  subPath: run.sh
-
