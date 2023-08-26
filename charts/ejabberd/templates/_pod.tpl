@@ -89,6 +89,14 @@
           {{- with .Values.resources }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
+        startupProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - healthcheck.sh
+          failureThreshold: 10
+          periodSeconds: 10
         readinessProbe:
           {{- if .Values.statefulSet.readinessProbe }}
           {{- toYaml .Values.statefulSet.readinessProbe | nindent 10 }}
@@ -98,11 +106,7 @@
             - /bin/sh
             - -c
             - healthcheck.sh
-          {{- if .Values.certFiles.sideCar.enabled }}
-          initialDelaySeconds: {{ default 10 .Values.certFiles.sideCar.waitPeriod }}
-          {{- else }}
-          initialDelaySeconds: 10
-          {{- end }}
+          initialDelaySeconds: 5
           periodSeconds: 15
           {{- end }}
         livenessProbe:
@@ -114,7 +118,7 @@
             - /bin/sh
             - -c
             - healthcheck.sh
-          initialDelaySeconds: 20
+          initialDelaySeconds: 5
           periodSeconds: 15
           {{- end }}
         lifecycle:
