@@ -114,9 +114,7 @@ data:
       console commands:
         from:
         - ejabberd_ctl
-        {{- if .Values.certFiles.sideCar.enabled }}
         - mod_http_api
-        {{- end }}
         what: '*'
         who: all
       public commands:
@@ -185,7 +183,6 @@ data:
     {{- end }}
 
     listen:
-    {{- if .Values.certFiles.sideCar.enabled }}
       -
         port: {{ default 5281 .Values.certFiles.sideCar.apiPort }}
         transport: "tcp"
@@ -193,7 +190,6 @@ data:
         module: ejabberd_http
         request_handlers:
           /api: mod_http_api
-    {{- end }}
     {{- range $name, $config := .Values.listen }}
     {{- if $config }}
     {{- if $config.enabled }}
