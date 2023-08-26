@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+### Added
+- Extend CI to include cluster chaos, e.g. pod kills, failures, etc., processone
+  `rtb` to test XMPP connections as well as scaling up and down.
+- Use kubernetes leases to elect an ejabberd leading pod for clustering. This
+  improves the robustness of the helm chart overall. The elector is enabled at
+  default.
+
+### Changed
+- Move image run scripts into the chart templates. This enables admins to easier
+  exchange the container image.
+- Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s6`.
+
+### Fixed
+- Fix parsing `host` values.
+
+### Removed
+- Remove the possibility to change the TCP healthcheck port. Healthchecks are
+  now performed with a custom healthcheck script. You still can define custom
+  healthchecks within the `values.yml` file.
 
 ## 0.5.1 - 2023-08-12
 ### Added

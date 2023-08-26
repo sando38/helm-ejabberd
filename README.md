@@ -2,23 +2,27 @@
 
 This repository holds a helm chart for [ejabberd](https://github.com/processone/ejabberd)
 which
-> is an open-source, robust, scalable and extensible realtime platform built
-> using Erlang/OTP, that includes XMPP Server, MQTT Broker and SIP Service.
+> [...] is an open-source, robust, scalable and extensible realtime platform
+> built using Erlang/OTP, that includes XMPP Server, MQTT Broker and SIP Service.
 
-The chart configures the environment needed to build and run ejabberd clusters.
-Additionally, the `values.yaml` file allows to include most of the configuration
-items, ejabberd offers in their [`ejabberd.yml`](https://github.com/processone/ejabberd/blob/master/ejabberd.yml.example).
+The chart configures the environment needed to build and run ejabberd kubernetes
+clusters. Additionally, the `values.yaml` file allows to include most of the
+configuration items, ejabberd offers in their [`ejabberd.yml`](https://github.com/processone/ejabberd/blob/master/ejabberd.yml.example).
 
 The chart and its items can be found [here](charts/ejabberd).
 
 ## Current state
 
-The chart is under development, meaning there is much room for enhancements and
+The chart is under development, meaning there is room for enhancements and
 improvements. The [issue tracker](https://github.com/sando38/helm-ejabberd/issues)
-may be used to additionally define a roadmap.
+may be used to define roadmap items.
 
-The chart is basically functional and needs testing. Please report back if
-anything does not work as expected.
+The chart is functional and needs testing. Please report back if anything does
+not work as expected.
+
+This repository also contains a CI which tests basic activities, e.g. scaling,
+XMPP connectivity and traffic with [processone's rtb](https://github.com/processone/rtb)
+as well as pod failures, kills, etc. with [chaos mesh](https://chaos-mesh.org/).
 
 Contributors and PRs are also welcome.
 
@@ -37,17 +41,18 @@ in the [image](image) directory and the respective [workflow file](.github/workf
 
 A short summary:
 
-* Includes a custom script to automatically detect and join a cluster
+* Includes an elector service to create kubernetes `leases` for pod leaders.
+* Includes custom scripts to automatically detect and join a cluster.
 * Slighlty modified `ejabberdctl` to use correct naming conventions for
-  ejabberd clusters
+  ejabberd clusters in kubernetes.
 * Stipped/ hardened image by deleting all unneccessary packages from the image,
   e.g. package managers, etc.
 * Includes additional libraries for ejabberd contribution modules
-  `ejabberd_auth_http`, `mod_captcha_rust` and `mod_ecaptcha`
+  `ejabberd_auth_http`, `mod_captcha_rust` and `mod_ecaptcha`.
 * The three mentioned modules plus `mod_s3_upload` are installed in the image
   already.
-* No ACME support, mounting your certs as k8s secrets is necessary
-* No support for CAPTCHA scripts, due to the nature of the stripped image
+* No ACME support, mounting your certs as k8s secrets is necessary.
+* No support for CAPTCHA scripts, due to the nature of the stripped image.
 
 ### Image tags
 

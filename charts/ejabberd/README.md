@@ -7,6 +7,13 @@ be used to run a single server w/o any downsides as well.
 
 All configuration aspects can be found on ejabberd's [documentation page](https://docs.ejabberd.im/admin/configuration/).
 
+### Elector service to define a leader pod (chart version >= `0.6.0`)
+
+This chart uses an elector service to define an ejabberd leader pod to improve
+the robustness of the chart especially in the case of failures, etc. The elector
+requires some `RBAC` to create `leases`. The elector may be disabled in
+`.Values.elector.enabled`.
+
 ### Persistence and database
 
 In general, ejabberd admins should use a **SQL database** in production instead
