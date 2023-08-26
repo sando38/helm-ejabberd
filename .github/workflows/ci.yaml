@@ -155,10 +155,6 @@ jobs:
           echo ">> print database log entries"
           kubectl logs sts/${{ matrix.dbApp }}
 
-      - name: Use custom run scripts
-        run: |
-          kubectl create cm run-ejabberd --from-file=./image/78f81de252dc932cd47b91d1a84ca8e8f0647498/scripts/run.sh
-
       - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
         working-directory: ./charts/ejabberd
         run: |
