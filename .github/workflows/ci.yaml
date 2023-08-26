@@ -78,8 +78,8 @@ jobs:
 
       - name: Create self signed certificate
         run: |
-          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=${{ github.run_id }}-${{ strategy.job-index }}.example.com' -keyout server.pem -days 365
-          kubectl create secret generic custom-cert --from-file=./server.pem
+          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=${{ github.run_id }}-${{ strategy.job-index }}.example.com' -keyout cert.pem -days 365
+          kubectl create secret generic custom-cert --from-file=./cert.pem
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
 
@@ -232,6 +232,32 @@ jobs:
           then exit 1
           fi
 
+      - name: Setup processone RTB tests
+        run: |
+          export CAPACITY='250'
+          export LB_IP="$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+          export XMPP_DOMAIN="${{ github.run_id }}-${{ strategy.job-index }}.example.com"
+          export RUNNER_UID="$(id -u)"
+          mkdir -p /tmp/rtb/{stats,www}
+          ./.github/ci/rtb/setup-rtb.sh
+
+      - name: Start processone RTB tests
+        run: |
+          echo '>> Start RTB container'
+          docker run --rm -d --name rtb --net=host \
+            -v $PWD/rtb.yml:/rtb/rtb.yml \
+            -v $PWD/cert.pem:/rtb/cert.pem \
+            -v /tmp/rtb/stats:/rtb/stats:rw \
+            -v /tmp/rtb/www:/rtb/www:rw \
+            localhost/rtb:latest
+
+          echo '>> docker ps and wait shortly ...'
+          docker ps
+          sleep 10s
+
+          echo '>> Print docker container logs'
+          docker logs rtb
+
       - name: Upgrade ejabberd helm chart
         working-directory: ./charts/ejabberd
         run: |
@@ -283,6 +309,8 @@ jobs:
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
+          echo ">> print RTB container logs"
+          docker logs rtb
 
       - name: Delete chaos tests (scheduled pod-failure)
         run: |
@@ -320,6 +348,8 @@ jobs:
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '1' ]
           then exit 1
           fi
+          echo ">> print RTB container logs"
+          docker logs rtb
 
       - name: Scale up ejabberd
         working-directory: ./charts/ejabberd
@@ -353,6 +383,8 @@ jobs:
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
+          echo ">> print RTB container logs"
+          docker logs rtb
 
       - name: Run chaos tests (pod-kill <= 66%)
         run: |
@@ -384,6 +416,8 @@ jobs:
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
+          echo ">> print RTB container logs"
+          docker logs rtb
 
       - name: Run chaos tests (pod-kill 100%)
         run: |
@@ -415,6 +449,8 @@ jobs:
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
+          echo ">> print RTB container logs"
+          docker logs rtb
 
       - name: Print final resources
         if: failure() || success()
@@ -422,6 +458,10 @@ jobs:
           kubectl get all -o wide
           echo ">> print clustering status"
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+          echo ">> print RTB container logs"
+          docker logs rtb
+          echo ">> stop RTB container"
+          docker stop rtb
 
       - name: Print ejabberd logs - ejabberd-0
         if: failure() || success()
