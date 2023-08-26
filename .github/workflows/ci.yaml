@@ -208,7 +208,7 @@ jobs:
               kubectl logs --all-containers=true sts/ejabberd
               sleep 30s
             else
-             break
+              break
             fi
           done
 
@@ -225,12 +225,16 @@ jobs:
         run: |
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin ${{ github.run_id }}-${{ strategy.job-index }}.example.com password
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
       - name: Call ejabberd API
         run: |
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          echo ">> check clustering status"
+          if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
+          then exit 1
+          fi
 
       - name: Upgrade ejabberd helm chart
         working-directory: ./charts/ejabberd
@@ -251,7 +255,7 @@ jobs:
               kubectl logs --all-containers=true sts/ejabberd
               sleep 15s
             else
-             break
+              break
             fi
           done
 
@@ -267,20 +271,22 @@ jobs:
           do
             for (( i=1; i != 10; i++ ))
             do
-                echo "Check number $i"
-                kubectl get pods -l app.kubernetes.io/name=ejabberd
-                kubectl logs --all-containers=true sts/ejabberd
-                sleep 15s
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 15s
             done
           done
 
-      - name: Push some commands to ejabberd
+      - name: Call ejabberd API
         run: |
-          echo ">> Call ejabberd API"
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
-          kubectl get pods -l app.kubernetes.io/name=ejabberd
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+          echo ">> check clustering status"
+          if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
+          then exit 1
+          fi
 
       - name: Delete chaos tests (scheduled pod-failure)
         run: |
@@ -305,16 +311,19 @@ jobs:
               kubectl logs --all-containers=true sts/ejabberd
               sleep 15s
             else
-             break
+              break
             fi
           done
 
       - name: Call ejabberd API
         run: |
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
-          kubectl get pods -l app.kubernetes.io/name=ejabberd
-          kubectl exec ejabberd-0 -c ejabberd -- ejabberdctl list_cluster
+          echo ">> check clustering status"
+          if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '1' ]
+          then exit 1
+          fi
 
       - name: Scale up ejabberd
         working-directory: ./charts/ejabberd
@@ -335,16 +344,19 @@ jobs:
               kubectl logs --all-containers=true sts/ejabberd
               sleep 30s
             else
-             break
+              break
             fi
           done
 
       - name: Call ejabberd API
         run: |
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
-          kubectl get pods -l app.kubernetes.io/name=ejabberd
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+          echo ">> check clustering status"
+          if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
+          then exit 1
+          fi
 
       - name: Run chaos tests (pod-kill <= 66%)
         run: |
@@ -363,16 +375,19 @@ jobs:
               kubectl logs --all-containers=true sts/ejabberd
               sleep 30s
             else
-             break
+              break
             fi
           done
 
       - name: Call ejabberd API
         run: |
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
-          kubectl get pods -l app.kubernetes.io/name=ejabberd
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+          echo ">> check clustering status"
+          if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
+          then exit 1
+          fi
 
       - name: Run chaos tests (pod-kill 100%)
         run: |
@@ -391,20 +406,26 @@ jobs:
               kubectl logs --all-containers=true sts/ejabberd
               sleep 30s
             else
-             break
+              break
             fi
           done
 
       - name: Call ejabberd API
         run: |
+          kubectl get pods -l app.kubernetes.io/name=ejabberd
           LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
-          kubectl get pods -l app.kubernetes.io/name=ejabberd
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
+          echo ">> check clustering status"
+          if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
+          then exit 1
+          fi
 
       - name: Print final resources
         if: failure() || success()
-        run: kubectl get all -o wide
+        run: |
+          kubectl get all -o wide
+          echo ">> print clustering status"
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
 
       - name: Print ejabberd logs - ejabberd-0
         if: failure() || success()
