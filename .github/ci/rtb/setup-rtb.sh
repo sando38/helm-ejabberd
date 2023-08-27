@@ -4,19 +4,6 @@ set -e
 set -u
 
 echo '> Source: https://github.com/processone/rtb'
-echo '>> Create test users for RTB'
-i=1
-while [ "$i" -le "${CAPACITY:-1000}" ]
-do
-    kubectl exec sts/ejabberd -c ejabberd -- wget -q 127.0.0.1:5281/api/register -O - \
-    --post-data "{\"user\":\"user$i\",\"host\":\"${XMPP_DOMAIN:-example.com}\",\"password\": \"pass$i\"}"
-    i=$((i + 1))
-    echo ''
-done
-
-echo '>> Create an everybody roster group for RTB'
-kubectl exec sts/ejabberd -c ejabberd -- wget -q 127.0.0.1:5281/api/push_alltoall -O - \
-    --post-data "{\"host\":\"${XMPP_DOMAIN:-example.com}\",\"group\": \"Everypody\"}"
 
 echo '>> Build RTB docker container image'
 docker build -t localhost/rtb:latest \
@@ -53,6 +40,20 @@ EOF
 
 echo '>> Print RTB configuration file'
 cat rtb.yml
+
+echo '>> Create test users for RTB'
+i=1
+while [ "$i" -le "${CAPACITY:-1000}" ]
+do
+    kubectl exec sts/ejabberd -c ejabberd -- wget -q 127.0.0.1:5281/api/register -O - \
+    --post-data "{\"user\":\"user$i\",\"host\":\"${XMPP_DOMAIN:-example.com}\",\"password\": \"pass$i\"}"
+    i=$((i + 1))
+    echo ''
+done
+
+echo '>> Create an everybody roster group for RTB'
+kubectl exec sts/ejabberd -c ejabberd -- wget -q 127.0.0.1:5281/api/push_alltoall -O - \
+    --post-data "{\"host\":\"${XMPP_DOMAIN:-example.com}\",\"group\": \"Everypody\"}"
 
 # echo '>> Start RTB container'
 # docker run -d --name rtb --net=host \

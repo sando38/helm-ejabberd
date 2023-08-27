@@ -42,9 +42,54 @@ jobs:
           /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.github/ci/kind-conf.yml
           kubectl get nodes -o wide
           echo "DB_APP=$(echo ${{ matrix.dbApp }} | sed -e 's|pgsql|postgresql|')" >> $GITHUB_ENV
+          echo "XMPP_DOMAIN=${{ github.run_id }}-${{ strategy.job-index }}.example.com" >> $GITHUB_ENV
+
+      - name: ${{ matrix.dbApp }} | w/ db baseline ${{ matrix.dbSchema }} | deploy helm chart
+        if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
+        run: |
+          echo ">> install ${{ matrix.dbApp }} helm chart"
+          kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+
+          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
+          then
+            initdb="--set primary.initdb.user=${{ env.DB }} \
+              --set primary.initdb.password=${{ env.DB_PASS }} \
+              --set primary.initdb.scriptsConfigMap=ejabberd-${{ matrix.dbApp }}-${{ matrix.dbSchema }}"
+          elif [ "${{ matrix.dbApp }}" = 'mariadb' ] || [ "${{ matrix.dbApp }}" = 'mysql' ]
+          then
+            initdb="--set initdbScriptsConfigMap=ejabberd-mysql-${{ matrix.dbSchema }}"
+          fi
+
+          helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
+            -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml ${initdb:-}
+
+      - name: ${{ matrix.dbApp }} | w/o db baseline | deploy helm chart
+        if: matrix.dbBaseline == 'none' && matrix.dbApp != 'mssql'
+        run: |
+          helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
+            -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml
+
+      - name: ${{ matrix.dbApp }} | deploy resources
+        if: matrix.dbApp == 'mssql'
+        run: |
+          echo ">> install ${{ matrix.dbApp }} CI resources"
+
+          if [ ! "${{ matrix.dbBaseline }}" = 'none' ]
+          then
+            kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+          else
+            kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbApp }}-initdb.yaml
+          fi
+
+          kubectl apply -f .github/ci/mssql-ci.yaml
+
+      - name: redis | deploy helm chart
+        run: |
+          helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
+            -f .github/ci/values-bitnami-redis.yaml
 
       # https://kind.sigs.k8s.io/docs/user/loadbalancer/
-      - name: Deploy metalLB v${{ env.METALLB_VSN }} for LoadBalancer services
+      - name: metalLB v${{ env.METALLB_VSN }} | deploy for LoadBalancer services
         run: |
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v${{ env.METALLB_VSN }}/config/manifests/metallb-native.yaml
           kubectl wait --namespace metallb-system \
@@ -78,67 +123,23 @@ jobs:
 
       - name: Create self signed certificate
         run: |
-          openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=${{ github.run_id }}-${{ strategy.job-index }}.example.com' -keyout cert.pem -days 365
+          openssl req -x509 -newkey rsa:4096 -nodes -subj "/CN=${{ env.XMPP_DOMAIN }}" -keyout cert.pem -days 365
           kubectl create secret generic custom-cert --from-file=./cert.pem
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
 
-      - name: Deploy redis helm chart
+      - name: ${{ matrix.dbApp }} | check deployment
         run: |
-          helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
-            -f .github/ci/values-bitnami-redis.yaml
-
-      - name: w/ db baseline ${{ matrix.dbSchema }} | deploy ${{ matrix.dbApp }} helm chart
-        if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
-        run: |
-          echo ">> install ${{ matrix.dbApp }} helm chart"
-          kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
-
-          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
-          then
-            initdb="--set primary.initdb.user=${{ env.DB }} \
-              --set primary.initdb.password=${{ env.DB_PASS }} \
-              --set primary.initdb.scriptsConfigMap=ejabberd-${{ matrix.dbApp }}-${{ matrix.dbSchema }}"
-          elif [ "${{ matrix.dbApp }}" = 'mariadb' ] || [ "${{ matrix.dbApp }}" = 'mysql' ]
-          then
-            initdb="--set initdbScriptsConfigMap=ejabberd-mysql-${{ matrix.dbSchema }}"
-          fi
-
-          helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
-            -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml ${initdb:-}
-
           echo ">> check rollout status"
           kubectl rollout status sts ${{ matrix.dbApp }}
+          echo ">> print resources"
+          kubectl get all -o wide
+          echo ">> print database log entries"
+          kubectl logs sts/${{ matrix.dbApp }}
 
-          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
-
-      - name: w/o db baseline | deploy ${{ matrix.dbApp }} helm chart
-        if: matrix.dbBaseline == 'none' && matrix.dbApp != 'mssql'
-        run: |
-          helm install ${{ matrix.dbApp }} oci://registry-1.docker.io/bitnamicharts/${{ env.DB_APP }} \
-            -f .github/ci/values-bitnami-${{ matrix.dbApp }}.yaml
-
-          echo ">> check rollout status"
-          kubectl rollout status sts ${{ matrix.dbApp }}
-
-      - name: Deploy ${{ matrix.dbApp }} resources
+      - name: ${{ matrix.dbApp }} | create initdb
         if: matrix.dbApp == 'mssql'
         run: |
-          echo ">> install ${{ matrix.dbApp }} CI resources"
-
-          if [ ! "${{ matrix.dbBaseline }}" = 'none' ]
-          then
-            kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
-          else
-            kubectl apply -f .github/ci/flyway-baseline/${{ matrix.dbApp }}-initdb.yaml
-          fi
-
-          kubectl apply -f .github/ci/mssql-ci.yaml
-
-          echo ">> check rollout status"
-          kubectl rollout status sts ${{ matrix.dbApp }}
-          sleep 30s
-
           echo ">> create initDB for mssql and optionally migrate db baseline"
           kubectl exec sts/mssql -- /opt/mssql-tools/bin/sqlcmd -U SA -P "${{ env.DB_PASS }}" -S localhost -i /tmp/mssql/initdb_mssql.sql
 
@@ -148,14 +149,12 @@ jobs:
             kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
           fi
 
-      - name: Check ${{ matrix.dbApp }} deployment
+      - name: ${{ matrix.dbApp }} | w/ db baseline ${{ matrix.dbSchema }} | remove initdb configmaps
+        if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
         run: |
-          echo ">> print resources"
-          kubectl get all -o wide
-          echo ">> print database log entries"
-          kubectl logs sts/${{ matrix.dbApp }}
+          kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
-      - name: w/ sql schema ${{ matrix.dbSchema }} | deploy ejabberd helm chart
+      - name: ejabberd | w/ sql schema ${{ matrix.dbSchema }} | deploy helm chart
         working-directory: ./charts/ejabberd
         run: |
           echo ">> install ejabberd helm chart"
@@ -188,12 +187,26 @@ jobs:
           helm install ejabberd \
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
-            --set hosts[0]=${{ github.run_id }}-${{ strategy.job-index }}.example.com \
+            --set hosts[0]=${{ env.XMPP_DOMAIN }} \
             --set logging.loglevel=debug .
 
-          echo ">> check rollout status"
+          echo ">> Sleep shortly to obtain LoadBalancer IP address"
+          sleep 10
+          echo "LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
+
+      - name: processone/rtb | prepare processone RTB tests
+        run: |
+          export CAPACITY='120'
+          export LB_IP="${{ env.LB_IP }}"
+          export XMPP_DOMAIN="${{ env.XMPP_DOMAIN }}"
+          export RUNNER_UID="$(id -u)"
+          mkdir -p /tmp/rtb/{stats,www}
+          echo "$LB_IP $XMPP_DOMAIN" | sudo tee -a /etc/hosts
+          ./.github/ci/rtb/setup-rtb.sh
+
+      - name: ejabberd | check rollout status
+        run: |
           kubectl get all -l app.kubernetes.io/name=ejabberd
-          sleep 105s
 
           for (( i=1; i != 10; i++ ))
           do
@@ -208,41 +221,30 @@ jobs:
             fi
           done
 
-      - name: Print resources, verify deployements
+      - name: ejabberd | print resources, verify deployements
         run: kubectl get all -o wide -l app.kubernetes.io/name=ejabberd
 
-      - name: Print logs from ejabberd sidecar
+      - name: ejabberd | print sidecar logs
         run: kubectl logs sts/ejabberd -c watcher
 
-      - name: Print logs from ejabberd container
+      - name: ejabberd | print ejabberd logs
         run: kubectl logs sts/ejabberd -c ejabberd
 
-      - name: Check ejabberd statefulset
+      - name: ejabberd | check statefulset, register admin user
         run: |
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl status
-          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin ${{ github.run_id }}-${{ strategy.job-index }}.example.com password
+          kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl register admin ${{ env.XMPP_DOMAIN }} password
 
-      - name: Call ejabberd API
+      - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
 
-      - name: Setup processone RTB tests
-        run: |
-          export CAPACITY='250'
-          export LB_IP="$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-          export XMPP_DOMAIN="${{ github.run_id }}-${{ strategy.job-index }}.example.com"
-          export RUNNER_UID="$(id -u)"
-          mkdir -p /tmp/rtb/{stats,www}
-          echo "$LB_IP $XMPP_DOMAIN" | sudo tee -a /etc/hosts
-          ./.github/ci/rtb/setup-rtb.sh
-
-      - name: Start processone RTB tests
+      - name: processone/rtb | start tests
         run: |
           echo '>> Start RTB container'
           docker run --rm -d --name rtb --net=host \
@@ -252,14 +254,13 @@ jobs:
             -v /tmp/rtb/www:/rtb/www:rw \
             localhost/rtb:latest
 
-          echo '>> docker ps and wait shortly ...'
+          echo '>> Print docker container deployments'
           docker ps
-          sleep 10s
 
           echo '>> Print docker container logs'
           docker logs rtb
 
-      - name: Upgrade ejabberd helm chart
+      - name: ejabberd | upgrade helm chart
         working-directory: ./charts/ejabberd
         run: |
           helm upgrade ejabberd --no-hooks --reuse-values \
@@ -282,7 +283,7 @@ jobs:
             fi
           done
 
-      - name: Run chaos tests (scheduled pod-failure)
+      - name: chaos | scheduled ejabberd pod-failure, wait for recovery
         run: |
           kubectl apply -f .github/ci/chaos-mesh/chaos-1.yaml
 
@@ -301,11 +302,10 @@ jobs:
             done
           done
 
-      - name: Call ejabberd API
+      - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
@@ -313,11 +313,11 @@ jobs:
           echo ">> print RTB container logs"
           docker logs rtb
 
-      - name: Delete chaos tests (scheduled pod-failure)
+      - name: chaos | stop scheduled ejabberd pod-failure
         run: |
           kubectl delete -f .github/ci/chaos-mesh/chaos-1.yaml
 
-      - name: Scale down ejabberd
+      - name: ejabberd | scale down helm release
         working-directory: ./charts/ejabberd
         run: |
           helm upgrade ejabberd --no-hooks --reuse-values \
@@ -340,11 +340,10 @@ jobs:
             fi
           done
 
-      - name: Call ejabberd API
+      - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '1' ]
           then exit 1
@@ -352,7 +351,7 @@ jobs:
           echo ">> print RTB container logs"
           docker logs rtb
 
-      - name: Scale up ejabberd
+      - name: ejabberd | scale up helm release
         working-directory: ./charts/ejabberd
         run: |
           helm upgrade ejabberd --no-hooks --reuse-values \
@@ -375,11 +374,10 @@ jobs:
             fi
           done
 
-      - name: Call ejabberd API
+      - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
@@ -387,7 +385,7 @@ jobs:
           echo ">> print RTB container logs"
           docker logs rtb
 
-      - name: Run chaos tests (pod-kill <= 66%)
+      - name: chaos | ejabberd pod-kill <= 66%, wait for recovery
         run: |
           kubectl apply -f .github/ci/chaos-mesh/chaos-2.yaml
 
@@ -408,11 +406,10 @@ jobs:
             fi
           done
 
-      - name: Call ejabberd API
+      - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
@@ -420,7 +417,7 @@ jobs:
           echo ">> print RTB container logs"
           docker logs rtb
 
-      - name: Run chaos tests (pod-kill 100%)
+      - name: chaos | ejabberd pod-kill 100%, wait for recovery
         run: |
           kubectl apply -f .github/ci/chaos-mesh/chaos-3.yaml
 
@@ -441,11 +438,10 @@ jobs:
             fi
           done
 
-      - name: Call ejabberd API
+      - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -L -d "{}" -X POST -k http://${LB_IP}:5280/api/status
+          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
@@ -453,7 +449,7 @@ jobs:
           echo ">> print RTB container logs"
           docker logs rtb
 
-      - name: Print final resources
+      - name: ejabberd | print final resources
         if: failure() || success()
         run: |
           kubectl get all -o wide
@@ -464,14 +460,14 @@ jobs:
           echo ">> stop RTB container"
           docker stop rtb
 
-      - name: Print ejabberd logs - ejabberd-0
+      - name: ejabberd | print logs - ejabberd-0
         if: failure() || success()
         run: kubectl logs ejabberd-0 -c ejabberd
 
-      - name: Print ejabberd logs - ejabberd-1
+      - name: ejabberd | print logs - ejabberd-1
         if: failure() || success()
         run: kubectl logs ejabberd-1 -c ejabberd
 
-      - name: Print ejabberd logs - ejabberd-2
+      - name: ejabberd | print logs - ejabberd-2
         if: failure() || success()
         run: kubectl logs ejabberd-2 -c ejabberd
