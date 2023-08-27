@@ -214,6 +214,16 @@ data:
     {{- toYaml .Values.captcha | nindent 4 }}
     {{- end }}
 
+    {{- if .Values.hostConfig }}
+    host_config:
+    {{- toYaml .Values.hostConfig | nindent 6 }}
+    {{- end }}
+
+    {{- if .Values.appendHostConfig }}
+    append_host_config:
+    {{- toYaml .Values.appendHostConfig | nindent 6 }}
+    {{- end }}
+
     {{- if .Values.additonalConfigurationItems }}
     {{- toYaml .Values.additonalConfigurationItems | nindent 4 }}
     {{- end }}

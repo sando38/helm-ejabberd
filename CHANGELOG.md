@@ -10,6 +10,8 @@ project adheres to [Semantic Versioning][SemVer].
 - Use kubernetes leases to elect an ejabberd leading pod for clustering. This
   improves the robustness of the helm chart overall. The elector is enabled at
   default.
+- Add extra sections in `values.yml` to define `host_config` and
+  `append_host_config`.
 
 ### Changed
 - **BREAKING:**

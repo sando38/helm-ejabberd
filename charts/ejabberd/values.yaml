@@ -706,6 +706,17 @@ authentification: {}
   #  - mnesia
   # auth_password_format: scram
   # auth_scram_hash: sha256
+  # disable_sasl_mechanisms:
+  #   - "digest-md5"
+  #   - "x-oauth2"
+
+#
+# CAPTCHA configuration
+# https://docs.ejabberd.im/admin/configuration/basic/#captcha
+#
+captcha: {}
+  # captcha_cmd: mod_ecaptcha
+  # captcha_url: auto
 
 #
 # LDAP configuration:
@@ -789,12 +800,24 @@ redis:
     # redis_queue_type:
 
 #
-# CAPTCHA configuration
-# https://docs.ejabberd.im/admin/configuration/basic/#captcha
+# Top-Level host_config:
+# https://docs.ejabberd.im/admin/configuration/toplevel/#host-config
 #
-captcha: {}
-  # captcha_cmd: mod_ecaptcha
-  # captcha_url: auto
+hostConfig: {}
+  # example.com:
+  #   language: "de"
+  #   auth_method: sql
+
+#
+# Top-Level append-host-config:
+# https://docs.ejabberd.im/admin/configuration/toplevel/#append-host-config
+#
+appendHostConfig: {}
+  # example.com:
+  #   modules:
+  #     mod_mam:
+  #       assume_mam_usage: true
+  #       default: always
 
 #
 # Additional ejabberd.yml configurations:
@@ -804,10 +827,8 @@ captcha: {}
 # https://docs.ejabberd.im/admin/configuration/toplevel/
 #
 additonalConfigurationItems: {}
-  # disable_sasl_mechanisms:
-  #   - "digest-md5"
-  #   - "x-oauth2"
   # language: "en"
+  # max_fsm_queue: 10000
 
 # -- Environment variables to be passed to ejabberd
 env: []
