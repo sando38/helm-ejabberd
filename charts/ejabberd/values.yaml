@@ -524,88 +524,174 @@ installContribModules: {}
 #
 # ejabberd modules
 #
-# -- the commented modules are the defaults
-#    if you want to customize, you need to specifiy all modules you want to use
-#    below including additional non-default modules.
-modules: {}
-  # mod_adhoc: {}
-  # mod_admin_extra: {}
-  # mod_announce:
-  #   access: announce
-  # mod_avatar: {}
-  # mod_blocking: {}
-  # mod_bosh: {}
-  # mod_caps: {}
-  # mod_carboncopy: {}
-  # mod_client_state: {}
-  # mod_configure: {}
-  # mod_disco: {}
-  # mod_fail2ban: {}
-  # mod_http_api: {}
-  # mod_http_upload:
-  #   put_url: https://@HOST@:5443/upload
-  #   custom_headers:
-  #     "Access-Control-Allow-Origin": "https://@HOST@"
-  #     "Access-Control-Allow-Methods": "GET,HEAD,PUT,OPTIONS"
-  #     "Access-Control-Allow-Headers": "Content-Type"
-  # mod_last: {}
-  # mod_mam:
-  #   ## Mnesia is limited to 2GB, better to use an SQL backend
-  #   ## For small servers SQLite is a good fit and is very easy
-  #   ## to configure. Uncomment this when you have SQL configured:
-  #   ## db_type: sql
-  #   assume_mam_usage: true
-  #   default: always
-  # mod_mqtt: {}
-  # mod_muc:
-  #   access:
-  #     - allow
-  #   access_admin:
-  #     - allow: admin
-  #   access_create: muc_create
-  #   access_persistent: muc_create
-  #   access_mam:
-  #     - allow
-  #   default_room_options:
-  #     mam: true
-  # mod_muc_admin: {}
-  # mod_offline:
-  #   access_max_user_messages: max_user_offline_messages
-  # mod_ping: {}
-  # mod_privacy: {}
-  # mod_private: {}
-  # mod_proxy65:
-  #   access: local
-  #   max_connections: 5
-  # mod_pubsub:
-  #   access_createnode: pubsub_createnode
-  #   plugins:
-  #     - flat
-  #     - pep
-  #   force_node_config:
-  #     ## Avoid buggy clients to make their bookmarks public
-  #     storage:bookmarks:
-  #       access_model: whitelist
-  # mod_push: {}
-  # mod_push_keepalive: {}
-  # mod_register:
-  #   ## Only accept registration requests from the "trusted"
-  #   ## network (see access_rules section above).
-  #   ## Think twice before enabling registration from any
-  #   ## address. See the Jabber SPAM Manifesto for details:
-  #   ## https://github.com/ge0rg/jabber-spam-fighting-manifesto
-  #   ip_access: trusted_network
-  # mod_roster:
-  #   versioning: true
-  # mod_s2s_dialback: {}
-  # mod_shared_roster: {}
-  # mod_stream_mgmt:
-  #   resend_on_timeout: if_offline
-  # mod_stun_disco: {}
-  # mod_vcard: {}
-  # mod_vcard_xupdate: {}
-  # mod_version:
-  #   show_os: false
+# -- Enable or disable modules below. Some modules depend on each other.
+#    To add additional modules, just append them to the modules list in the same
+#    format as the other modules below as well.
+#    Module options: https://docs.ejabberd.im/admin/configuration/modules
+#                    https://github.com/processone/ejabberd-contrib
+modules:
+  mod_adhoc:
+    enabled: true
+    options: {}
+  mod_admin_extra:
+    enabled: true
+    options: {}
+  mod_announce:
+    enabled: true
+    options:
+      access: announce
+  mod_avatar:
+    enabled: true
+    options: {}
+  mod_blocking:
+    enabled: true
+    options: {}
+  mod_bosh:
+    enabled: true
+    options: {}
+  mod_caps:
+    enabled: true
+    options: {}
+  mod_carboncopy:
+    enabled: true
+    options: {}
+  mod_client_state:
+    enabled: true
+    options: {}
+  mod_configure:
+    enabled: true
+    options: {}
+  mod_disco:
+    enabled: true
+    options: {}
+  mod_fail2ban:
+    enabled: true
+    options: {}
+  mod_http_api:
+    enabled: true
+    options: {}
+  mod_http_upload:
+    enabled: true
+    options:
+      ## Should match the configs you specified in e.g. '.Values.listen.https'
+      put_url: https://@HOST@:5443/upload
+      custom_headers:
+        "Access-Control-Allow-Origin": "https://@HOST@"
+        "Access-Control-Allow-Methods": "GET,HEAD,PUT,OPTIONS"
+        "Access-Control-Allow-Headers": "Content-Type"
+  mod_last:
+    enabled: true
+    options: {}
+  mod_mam:
+    enabled: true
+    options:
+      ## Mnesia is limited to 2GB, better to use an SQL backend
+      ## For small servers SQLite is a good fit and is very easy
+      ## to configure. Uncomment this when you have SQL configured:
+      ## db_type: sql
+      assume_mam_usage: true
+      default: always
+  mod_mqtt:
+    enabled: false
+    options: {}
+  mod_muc:
+    enabled: true
+    options:
+      access:
+        - allow
+      access_admin:
+        - allow: admin
+      access_create: muc_create
+      access_persistent: muc_create
+      access_mam:
+        - allow
+      default_room_options:
+        mam: true
+  mod_muc_admin:
+    enabled: true
+    options: {}
+  mod_offline:
+    enabled: true
+    options:
+      access_max_user_messages: max_user_offline_messages
+  mod_ping:
+    enabled: true
+    options: {}
+  mod_privacy:
+    enabled: true
+    options: {}
+  mod_private:
+    enabled: true
+    options: {}
+  mod_proxy65:
+    enabled: true
+    options:
+      access: local
+      max_connections: 5
+  mod_pubsub:
+    enabled: true
+    options:
+      access_createnode: pubsub_createnode
+      plugins:
+        - flat
+        - pep
+      force_node_config:
+        ## Avoid buggy clients to make their bookmarks public
+        storage:bookmarks:
+          access_model: whitelist
+  mod_push:
+    enabled: true
+    options: {}
+  mod_push_keepalive:
+    enabled: true
+    options: {}
+  mod_register:
+    enabled: true
+    options:
+      ip_access: trusted_network
+  mod_roster:
+    enabled: true
+    options:
+      versioning: true
+  mod_s2s_dialback:
+    enabled: true
+    options: {}
+  mod_shared_roster:
+    enabled: true
+    options: {}
+  mod_stream_mgmt:
+    enabled: true
+    options:
+      resend_on_timeout: if_offline
+  mod_stun_disco:
+    enabled: true
+    options: {}
+  mod_vcard:
+    enabled: true
+    options: {}
+  mod_vcard_xupdate:
+    enabled: true
+    options: {}
+  mod_version:
+    enabled: true
+    options:
+      show_os: false
+  ## -- add further modules like the example below.
+  # mod_cron:
+  #   enabled: true
+  #   options:
+  #     tasks:
+  #       - time: 10
+  #         units: seconds
+  #         command: connected_users
+  # mod_s3_upload:
+  #   enabled: true
+  #   options:
+  #     ## Required, characteristic values shown
+  #     access_key_id: ABCDEF1234567890
+  #     access_key_secret: s3UnsecureP4ss
+  #     region: us-east-2
+  #     bucket_url: https://my-bucket.whatever-service.com
 
 #
 # Authentification method

@@ -12,6 +12,9 @@ project adheres to [Semantic Versioning][SemVer].
   default.
 
 ### Changed
+- **BREAKING:**
+  Refactor `.Values.modules` to allow enabling/disabling, configuring and adding
+  of ejabberd modules.
 - Move image run scripts into the chart templates. This enables admins to easier
   exchange the container image.
 - Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s6`.
