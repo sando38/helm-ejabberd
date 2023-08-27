@@ -91,6 +91,8 @@ _join_cluster() {
         while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
         info "==> Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
         if [ -z "${CTL_ON_START-}" ]
+        ## TODO: Consider prepending 'set_master $sts_name@$join_pod_name' here
+        ##       to counter brain-splits, perhaps also optional via variables?
         then export CTL_ON_START="join_cluster $sts_name@$join_pod_name"
         else export CTL_ON_START="join_cluster $sts_name@$join_pod_name ; $CTL_ON_START"
         fi

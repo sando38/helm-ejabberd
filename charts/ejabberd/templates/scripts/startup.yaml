@@ -39,7 +39,9 @@ data:
         then
             if [ "$election_leader" = "$pod_name" ]
             then
-                ejabberdctl set_master self && return 0
+                ## TODO: Consider 'set_master self' here to counter brain-splits.
+                # ejabberdctl set_master self && return 0
+                return 0
             elif [ "$cluster_member_count" = "1" ]
             then
                 ## try re-joining ejabberd cluster
@@ -148,6 +150,8 @@ data:
             while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
             info "==> Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
             if [ -z "${CTL_ON_START-}" ]
+            ## TODO: Consider prepending 'set_master $sts_name@$join_pod_name' here
+            ##       to counter brain-splits, perhaps also optional via variables?
             then export CTL_ON_START="join_cluster $sts_name@$join_pod_name"
             else export CTL_ON_START="join_cluster $sts_name@$join_pod_name ; $CTL_ON_START"
             fi

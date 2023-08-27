@@ -15,7 +15,9 @@ then
     then
         if [ "$election_leader" = "$pod_name" ]
         then
-            ejabberdctl set_master self && return 0
+            ## TODO: Consider 'set_master self' here to counter brain-splits.
+            # ejabberdctl set_master self && return 0
+            return 0
         elif [ "$cluster_member_count" = "1" ]
         then
             ## try re-joining ejabberd cluster
