@@ -20,6 +20,7 @@ env:
 jobs:
   deploy_test:
     runs-on: ubuntu-latest
+    # concurrency: ci-${{ github.ref }}
     strategy:
       matrix:
         dbApp: [pgsql, mariadb, mysql, mssql]
@@ -200,7 +201,7 @@ jobs:
           export LB_IP="${{ env.LB_IP }}"
           export XMPP_DOMAIN="${{ env.XMPP_DOMAIN }}"
           export RUNNER_UID="$(id -u)"
-          mkdir -p /tmp/rtb/{stats,www}
+          mkdir -p /tmp/rtb/${{ env.XMPP_DOMAIN }}/{stats,www}
           echo "$LB_IP $XMPP_DOMAIN" | sudo tee -a /etc/hosts
           ./.github/ci/rtb/setup-rtb.sh
 
@@ -250,8 +251,8 @@ jobs:
           docker run --rm -d --name rtb --net=host \
             -v $PWD/rtb.yml:/rtb/rtb.yml \
             -v $PWD/cert.pem:/rtb/cert.pem \
-            -v /tmp/rtb/stats:/rtb/stats:rw \
-            -v /tmp/rtb/www:/rtb/www:rw \
+            -v /tmp/rtb/${{ env.XMPP_DOMAIN }}/stats:/rtb/stats:rw \
+            -v /tmp/rtb/${{ env.XMPP_DOMAIN }}/www:/rtb/www:rw \
             localhost/rtb:latest
 
           echo '>> Print docker container deployments'
@@ -471,3 +472,13 @@ jobs:
       - name: ejabberd | print logs - ejabberd-2
         if: failure() || success()
         run: kubectl logs ejabberd-2 -c ejabberd
+
+      ## Define an additional job, which depends on the deploy_test and
+      ## downloads the rtb results as action artifacts
+      #
+      # - name: Publish rtb results to gh-pages
+      #   if: failure() || success()
+      #   uses: JamesIves/github-pages-deploy-action@v4
+      #   with:
+      #     folder: /tmp/rtb
+      #     target-folder: rtb/${{ env.XMPP_DOMAIN }}
