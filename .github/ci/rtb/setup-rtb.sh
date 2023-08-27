@@ -47,7 +47,7 @@ muc_message_interval: 120
 presence_interval: 120
 disconnect_interval: 120
 proxy65_interval: false
-http_upload_interval: false
+http_upload_interval: 120
 starttls: false
 EOF
 

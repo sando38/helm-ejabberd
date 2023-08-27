@@ -239,6 +239,7 @@ jobs:
           export XMPP_DOMAIN="${{ github.run_id }}-${{ strategy.job-index }}.example.com"
           export RUNNER_UID="$(id -u)"
           mkdir -p /tmp/rtb/{stats,www}
+          echo "$LB_IP $XMPP_DOMAIN" | sudo tee -a /etc/hosts
           ./.github/ci/rtb/setup-rtb.sh
 
       - name: Start processone RTB tests
