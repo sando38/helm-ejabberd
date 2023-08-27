@@ -11,10 +11,7 @@ listen:
     options:
       request_handlers:
         /api: mod_http_api
-  https:
-    options:
-      request_handlers:
-        /api: mod_http_api
+        /upload: mod_http_upload
 
 sqlDatabase:
   enabled: true
@@ -36,6 +33,15 @@ redis:
   config:
     redis_server: redis-master
     redis_password: red1sUnsecureP4ss
+
+modules:
+  mod_http_upload:
+    options:
+      put_url: http://@HOST@:5280/upload
+      custom_headers:
+        "Access-Control-Allow-Origin": "https://@HOST@"
+        "Access-Control-Allow-Methods": "GET,HEAD,PUT,OPTIONS"
+        "Access-Control-Allow-Headers": "Content-Type"
 
 persistence:
   enabled: true
