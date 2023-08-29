@@ -450,10 +450,49 @@ jobs:
           echo ">> print RTB container logs"
           docker logs rtb
 
+      - name: ejabberd | on failure | print logs - ejabberd-0
+        if: failure()
+        run: kubectl logs ejabberd-0 -c ejabberd
+
+      - name: ejabberd | on failure | print logs - ejabberd-1
+        if: failure()
+        run: kubectl logs ejabberd-1 -c ejabberd
+
+      - name: ejabberd | on failure | print logs - ejabberd-2
+        if: failure()
+        run: kubectl logs ejabberd-2 -c ejabberd
+
+      - name: ejabberd | on failure | delete & recreate statefulset
+        if: failure()
+        run: |
+          echo ">> Delete statefulset"
+          kubectl get sts ejabberd -o yaml > sts.yaml
+          kubectl delete -f sts.yaml
+          kubectl apply -f sts.yaml
+
+          echo ">> Check deployment"
+          kubectl get all -l app.kubernetes.io/name=ejabberd
+          sleep 105s
+
+          for (( i=1; i != 10; i++ ))
+          do
+            if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
+            then
+              echo "Check number $i"
+              kubectl get pods -l app.kubernetes.io/name=ejabberd
+              kubectl logs --all-containers=true sts/ejabberd
+              sleep 30s
+            else
+              break
+            fi
+          done
+
       - name: ejabberd | print final resources
         if: failure() || success()
         run: |
+          echo ">> print kubernetes resources"
           kubectl get all -o wide
+          kubectl get pvc
           echo ">> print clustering status"
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
           echo ">> print RTB container logs"
