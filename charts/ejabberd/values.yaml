@@ -85,20 +85,29 @@ statefulSet:
     #     command: ["/bin/sh", "-c", "sleep 40"]
     # postStart:
     #   tcpSocket:
-    #     path: /ping
     #     port: 5222
-    #     host: localhost
-    #     scheme: HTTP
+  startupProbe: {}
+    # exec:
+    #   command:
+    #     - /bin/sh
+    #     - -c
+    #     - healthcheck.sh
+    # failureThreshold: 10
+    # periodSeconds: 3
   readinessProbe: {}
-    # tcpSocket:
-    #   port: 5210
-    # initialDelaySeconds: 5
-    # periodSeconds: 5
+    # exec:
+    #   command:
+    #     - /bin/sh
+    #     - -c
+    #     - healthcheck.sh
+    # periodSeconds: 15
   livenessProbe: {}
-    # tcpSocket:
-    #   port: 5210
-    # initialDelaySeconds: 5
-    # periodSeconds: 5
+    # exec:
+    #   command:
+    #     - /bin/sh
+    #     - -c
+    #     - healthcheck.sh
+    # periodSeconds: 15
 
 serviceAccount:
   # Specifies whether a service account should be created
