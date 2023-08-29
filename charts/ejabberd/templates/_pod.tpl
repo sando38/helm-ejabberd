@@ -100,7 +100,7 @@
             - -c
             - healthcheck.sh
           failureThreshold: 10
-          periodSeconds: 10
+          periodSeconds: 3
           {{- end }}
         readinessProbe:
           {{- if .Values.statefulSet.readinessProbe }}
