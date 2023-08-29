@@ -58,31 +58,27 @@ info "==> This is ejabberd node $sts_name@$pod_endpoint_name ..."
 ##       or check: https://github.com/bitwalker/libcluster
 ##                 https://github.com/pedro-gutierrez/cluster
 _start_elector() {
-    export is_leader='false'
+    info "==> Start elector sidecar service on $election_url ..."
+    elector -election "$election_name" \
+            -namespace "$pod_namespace" \
+            -http "$election_url" \
+            -ttl "$election_ttl" &
+    export pid_elector=$!
 
-    if [ "${ELECTOR_ENABLED:-false}" = 'true' ]
-    then
-        info "==> Start elector sidecar service on $election_url ..."
-        elector -election "$election_name" \
-                -namespace "$pod_namespace" \
-                -http "$election_url" \
-                -ttl "$election_ttl" &
-        export pid_elector=$!
+    info "==> Wait for elector sidecar to be available on $election_url ..."
+    while ! nc -z "$election_url"; do sleep 1; done
+    info "==> elector sidecar is available on $election_url ..."
 
-        info "==> Wait for elector sidecar to be available on $election_url ..."
-        while ! nc -z "$election_url"; do sleep 1; done
-        info "==> elector sidecar is available on $election_url ..."
-
-        if [ "$(wget -cq "$election_url" -O - | jq .is_leader)" == "true" ]
-        then export is_leader='true'
-        fi
+    if [ "$(wget -cq "$election_url" -O - | jq .is_leader)" == "true" ]
+    then export is_leader='true'
     fi
 }
 
 _join_cluster() {
     if [ "$is_leader" = 'true' ] && ( [ -z "$cluster_pod_names" ] || [ "$cluster_pod_names" = 'NXDOMAIN' ] )
     then
-        info '==> No healty pods detected, continuing ...'
+        info '==> No healthy pods detected, continuing ...'
+        touch "$ready_file" || _shutdown
     elif [ "$is_leader" = 'false' ] || ( [ ! -z "$cluster_pod_names" ] && [ ! "$cluster_pod_names" = 'NXDOMAIN' ] )
     then
         info '==> Found other healthy pods ...'
@@ -92,20 +88,13 @@ _join_cluster() {
         fi
         while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
         info "==> Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
-        if [ -z "${CTL_ON_START-}" ]
-        ## TODO: Consider prepending 'set_master $sts_name@$join_pod_name' here
-        ##       to counter brain-splits, perhaps also optional via variables?
-        then export CTL_ON_START="join_cluster $sts_name@$join_pod_name"
-        else export CTL_ON_START="join_cluster $sts_name@$join_pod_name ; $CTL_ON_START"
-        fi
+        ejabberdctl join_cluster $sts_name@$join_pod_name && touch "$ready_file" || _shutdown
     fi
 }
 
-if [ "${K8S_CLUSTERING:-false}" = 'true' ]
-then
-    _start_elector
-    _join_cluster
-fi
+## Start elector, if enabled
+export is_leader='false'
+[ "${ELECTOR_ENABLED:-false}" = 'true' ] && _start_elector
 
 ## Termination
 pid_ejabberd=0
@@ -130,7 +119,6 @@ trap '_shutdown' SIGTERM
 info '==> Start ejabberd main process ...'
 ejabberdctl foreground &
 pid_ejabberd=$!
-# CTL_ON_START uses a 2s interval to check status, before applying the commands
-ejabberdctl started && sleep 5s
-ejabberdctl started && touch "$ready_file"
+ejabberdctl started
+[ "${K8S_CLUSTERING:-false}" = 'true' ] && _join_cluster
 wait ${pid_ejabberd-} ${pid_elector-}
