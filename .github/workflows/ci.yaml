@@ -28,6 +28,16 @@ jobs:
         dbBaseline: [23.04, none]
       fail-fast: false
     steps:
+      ## If more is needed:
+      ## https://github.com/actions/runner-images/issues/2840#issuecomment-1540506686
+      - name: Free disk space
+        run: |
+          sudo docker rmi $(docker image ls -aq) || true
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: Check out code
         uses: actions/checkout@v1
 
