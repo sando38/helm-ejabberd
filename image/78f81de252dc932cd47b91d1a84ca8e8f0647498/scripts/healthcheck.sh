@@ -1,5 +1,17 @@
 #!/bin/sh
 
+myself=${0##*/}
+
+info()
+{
+    echo "$myself: $*"
+}
+
+error()
+{
+    echo >&2 "$myself: $*"
+}
+
 pod_name="${POD_NAME:-$(hostname -s)}" # e.g. pod-0
 pod_endpoint_name="$(hostname -f)" # e.g. pod-0.servicename.namespace.svc.cluster.local
 headless_svc="$(hostname -d)" # e.g. servicename.namespace.default.svc.cluster.local
@@ -30,6 +42,7 @@ then
             rm $HOME/.ejabberd_ready
             ## try re-joining ejabberd cluster
             join_pod_name="$election_leader.${headless_svc}"
+            info "==> Will re-join via ejabberd pod $sts_name@$join_pod_name ..."
             ejabberdctl join_cluster "$sts_name@$join_pod_name" && sleep 5
             if [ "$(_cluster_member_count)" = "1" ]
             then
@@ -46,6 +59,7 @@ then
         rm $HOME/.ejabberd_ready
         ## try re-joining ejabberd cluster
         join_pod_name="$(echo $cluster_pod_names | awk 'END{ print $1 }')"
+        info "==> Will re-join ejabberd pod $sts_name@$join_pod_name ..."
         ejabberdctl join_cluster "$sts_name@$join_pod_name" && sleep 5
         if [ ! "$(_cluster_member_count)" = "$(echo $svc_pod_names | wc -l)" ]
         then
