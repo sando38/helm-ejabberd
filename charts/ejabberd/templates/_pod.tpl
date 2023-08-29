@@ -91,6 +91,9 @@
           {{- end }}
         command: ["/sbin/tini", "--", "/bin/sh", "-c", "run.sh"]
         startupProbe:
+          {{- if .Values.statefulSet.startupProbe }}
+          {{- toYaml .Values.statefulSet.startupProbe | nindent 10 }}
+          {{- else }}
           exec:
             command:
             - /bin/sh
@@ -98,6 +101,7 @@
             - healthcheck.sh
           failureThreshold: 10
           periodSeconds: 10
+          {{- end }}
         readinessProbe:
           {{- if .Values.statefulSet.readinessProbe }}
           {{- toYaml .Values.statefulSet.readinessProbe | nindent 10 }}
@@ -107,7 +111,6 @@
             - /bin/sh
             - -c
             - healthcheck.sh
-          initialDelaySeconds: 5
           periodSeconds: 15
           {{- end }}
         livenessProbe:
@@ -119,7 +122,6 @@
             - /bin/sh
             - -c
             - healthcheck.sh
-          initialDelaySeconds: 5
           periodSeconds: 15
           {{- end }}
         lifecycle:

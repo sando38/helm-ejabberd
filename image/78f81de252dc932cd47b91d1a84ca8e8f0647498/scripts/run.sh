@@ -31,6 +31,8 @@ info ''
 info '=> Thanks to all who made this work possible. Special thanks to Holger'
 info '   @weiss for open ears and brainstorming!'
 info ''
+info "=> Pod started on $(date)."
+info ''
 
 # Clustering variables
 pod_name="${POD_NAME:-$(hostname -s)}" # e.g. pod-0
