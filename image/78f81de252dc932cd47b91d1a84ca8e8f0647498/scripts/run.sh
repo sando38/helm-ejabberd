@@ -74,27 +74,23 @@ _start_elector() {
     fi
 }
 
-_join_cluster() {
-    if [ "$is_leader" = 'true' ] && ( [ -z "$cluster_pod_names" ] || [ "$cluster_pod_names" = 'NXDOMAIN' ] )
-    then
-        info '==> No healthy pods detected, continuing ...'
-        touch "$ready_file" || _shutdown
-    elif [ "$is_leader" = 'false' ] || ( [ ! -z "$cluster_pod_names" ] && [ ! "$cluster_pod_names" = 'NXDOMAIN' ] )
-    then
-        info '==> Found other healthy pods ...'
-        if [ "${ELECTOR_ENABLED:-false}" = 'true' ] && [ "$is_leader" = 'false' ]
-        then export join_pod_name="$(wget -cq "$election_url" -O - | jq -r .leader).${headless_svc}"
-        else export join_pod_name="$(echo $cluster_pod_names | awk 'END{ print $1 }')"
-        fi
-        while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
-        info "==> Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
-        ejabberdctl join_cluster $sts_name@$join_pod_name && touch "$ready_file" || _shutdown
-    fi
-}
-
-## Start elector, if enabled
-export is_leader='false'
-[ "${ELECTOR_ENABLED:-false}" = 'true' ] && _start_elector
+# _join_cluster() {
+#     if [ "$is_leader" = 'true' ] && ( [ -z "$cluster_pod_names" ] || [ "$cluster_pod_names" = 'NXDOMAIN' ] )
+#     then
+#         info '==> No healthy pods detected, continuing ...'
+#         touch "$ready_file" || _shutdown
+#     elif [ "$is_leader" = 'false' ] || ( [ ! -z "$cluster_pod_names" ] && [ ! "$cluster_pod_names" = 'NXDOMAIN' ] )
+#     then
+#         info '==> Found other healthy pods ...'
+#         if [ "${ELECTOR_ENABLED:-false}" = 'true' ] && [ "$is_leader" = 'false' ]
+#         then export join_pod_name="$(wget -cq "$election_url" -O - | jq -r .leader).${headless_svc}"
+#         else export join_pod_name="$(echo $cluster_pod_names | sort -n | awk 'NR==1{print $1}')"
+#         fi
+#         while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
+#         info "==> Will join ejabberd pod $sts_name@$join_pod_name at startup ..."
+#         ejabberdctl join_cluster $sts_name@$join_pod_name && sleep 5s
+#     fi
+# }
 
 ## Termination
 pid_ejabberd=0
@@ -108,8 +104,8 @@ _shutdown() {
     if [ "$pid_ejabberd" -ne 0 ]
     then
         info "==> Gracefully shut down ejabberd pod $sts_name@$pod_endpoint_name ..."
-        ejabberdctl stop > /dev/null
-        ejabberdctl stopped > /dev/null
+        ejabberdctl stop
+        ejabberdctl stopped
     fi
 }
 
@@ -119,6 +115,13 @@ trap '_shutdown' SIGTERM
 info '==> Start ejabberd main process ...'
 ejabberdctl foreground &
 pid_ejabberd=$!
+
+## Start elector, if enabled
+export is_leader='false'
+[ "${ELECTOR_ENABLED:-false}" = 'true' ] && _start_elector
+
 ejabberdctl started
-[ "${K8S_CLUSTERING:-false}" = 'true' ] && _join_cluster
+# [ "${K8S_CLUSTERING:-false}" = 'true' ] && _join_cluster
+STARTUP='true' healthcheck.sh || _shutdown
+
 wait ${pid_ejabberd-} ${pid_elector-}
