@@ -100,32 +100,9 @@ jobs:
             -f .github/ci/values-bitnami-redis.yaml
 
       # https://kind.sigs.k8s.io/docs/user/loadbalancer/
-      - name: metalLB v${{ env.METALLB_VSN }} | deploy for LoadBalancer services
+      - name: metalLB v${{ env.METALLB_VSN }} | deploy LoadBalancer service
         run: |
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v${{ env.METALLB_VSN }}/config/manifests/metallb-native.yaml
-          kubectl wait --namespace metallb-system \
-                --for=condition=ready pod \
-                --selector=app=metallb \
-                --timeout=90s
-
-          ipam="$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '{gsub("[\\[\\{\\.]", " "); print  $1"."$2}')"
-
-          kubectl apply -f - <<-EOF
-          apiVersion: metallb.io/v1beta1
-          kind: IPAddressPool
-          metadata:
-            name: kind-ipaddresspool
-            namespace: metallb-system
-          spec:
-            addresses:
-            - $ipam.255.200-$ipam.255.250
-          ---
-          apiVersion: metallb.io/v1beta1
-          kind: L2Advertisement
-          metadata:
-            name: kind-l2advertisment
-            namespace: metallb-system
-          EOF
 
       - name: Setup chaos mesh v${{ env.CHAOS_VSN }}
         run: |
@@ -164,6 +141,32 @@ jobs:
         if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
         run: |
           kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
+
+      - name: metalLB v${{ env.METALLB_VSN }} | check readiness, apply config
+        run: |
+          kubectl wait --namespace metallb-system \
+                --for=condition=ready pod \
+                --selector=app=metallb \
+                --timeout=90s
+
+          ipam="$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '{gsub("[\\[\\{\\.]", " "); print  $1"."$2}')"
+
+          kubectl apply -f - <<-EOF
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: kind-ipaddresspool
+            namespace: metallb-system
+          spec:
+            addresses:
+            - $ipam.255.200-$ipam.255.250
+          ---
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: kind-l2advertisment
+            namespace: metallb-system
+          EOF
 
       - name: ejabberd | w/ sql schema ${{ matrix.dbSchema }} | deploy helm chart
         working-directory: ./charts/ejabberd
