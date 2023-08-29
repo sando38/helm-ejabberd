@@ -222,7 +222,7 @@ jobs:
         run: |
           kubectl get all -l app.kubernetes.io/name=ejabberd
 
-          for (( i=1; i != 10; i++ ))
+          for (( i=1; i != 2; i++ ))
           do
             if [ ! $(kubectl get sts ejabberd --no-headers | awk '{{print $2}}') = '3/3' ]
             then
