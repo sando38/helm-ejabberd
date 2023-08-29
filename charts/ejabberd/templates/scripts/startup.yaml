@@ -195,20 +195,15 @@ data:
     ## Termination
     pid_ejabberd=0
 
-    # trap for graceful shutdown, disconnection from cluster happens automatically
+    # trap for graceful shutdown
     _shutdown() {
         if [ "${ELECTOR_ENABLED:-false}" = 'true' ]
         then kill -s TERM "$pid_elector"
         fi
-
+        ## disconnection from cluster happens automatically
         if [ "$pid_ejabberd" -ne 0 ]
         then
             info "==> Gracefully shut down ejabberd pod $sts_name@$pod_endpoint_name ..."
-
-            if [ "${K8S_CLUSTERING:-false}" = 'true' ]
-            then
-                NO_WARNINGS=true ejabberdctl leave_cluster "$sts_name@$pod_endpoint_name"
-            fi
             ejabberdctl stop > /dev/null
             ejabberdctl stopped > /dev/null
         fi
