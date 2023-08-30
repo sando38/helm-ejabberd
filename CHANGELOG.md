@@ -9,7 +9,7 @@ project adheres to [Semantic Versioning][SemVer].
   `rtb` to test XMPP connections as well as scaling up and down.
 - Use kubernetes leases to elect an ejabberd leading pod for clustering. This
   improves the robustness of the helm chart overall. The elector is enabled at
-  default.
+  default. If disabled, it falls back to the old k8s-DNS-based method.
 - Add extra sections in `values.yml` to define `host_config` and
   `append_host_config`.
 

@@ -42,7 +42,8 @@ in the [image](image) directory and the respective [workflow file](.github/workf
 A short summary:
 
 * Includes an elector service to create kubernetes `leases` for pod leaders.
-* Includes custom scripts to automatically detect and join a cluster.
+* Includes custom scripts to automatically detect and join a cluster as well as
+  for performing healthchecks and self-healing.
 * Slighlty modified `ejabberdctl` to use correct naming conventions for
   ejabberd clusters in kubernetes.
 * Stipped/ hardened image by deleting all unneccessary packages from the image,
