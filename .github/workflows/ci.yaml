@@ -202,7 +202,7 @@ jobs:
             -f ../../.github/ci/values-ejabberd.yaml \
             ${baseline:-} ${sql_schema:-} ${sql_options:-} \
             --set hosts[0]=${{ env.XMPP_DOMAIN }} \
-            --set logging.loglevel=debug .
+            --set logging.loglevel=info .
 
           echo ">> Sleep shortly to obtain LoadBalancer IP address"
           sleep 10
@@ -278,7 +278,7 @@ jobs:
         working-directory: ./charts/ejabberd
         run: |
           helm upgrade ejabberd --no-hooks --reuse-values \
-            --set logging.loglevel=info .
+            --set logging.loglevel=notice .
 
           echo ">> Check deployment"
           kubectl get all -l app.kubernetes.io/name=ejabberd
