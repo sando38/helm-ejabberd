@@ -22,14 +22,14 @@ api_url="127.0.0.1:5281"
 pod_status="$(wget -O - --post-data '{}' $api_url/api/status || echo 'unhealthy')"
 election_url="${ELECTION_URL:-127.0.0.1:4040}"
 
-# In some cases it needs to be called twice.
+# List cluster members
 _cluster_member() {
     members="$(wget -q -O - --post-data '{}' $api_url/api/list_cluster | egrep -o '[^][]+' | tr ',' '\n')"
     printf "$members"
 }
 
-# Rejoining cluster DNS based clustering method
-_rejoin_cluster_dns() {
+# (Re-)join cluster - DNSSRV derived
+_join_cluster_dns() {
     [ -e "$HOME/.ejabberd_ready" ] && rm $HOME/.ejabberd_ready
     join_pod_name="$(echo $cluster_pod_names | sort -n | awk 'NR==1{print $1}')"
     if echo "$(_cluster_member)" | grep -q "$join_pod_name"
@@ -40,7 +40,7 @@ _rejoin_cluster_dns() {
         info "==> Leaving former cluster ..."
         NO_WARNINGS=true ejabberdctl leave_cluster "$sts_name@$pod_name.${headless_svc}"
         while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
-        info "==> Will re-join ejabberd pod $sts_name@$join_pod_name ..."
+        info "==> Will (re-)join ejabberd pod $sts_name@$join_pod_name ..."
         ejabberdctl join_cluster "$sts_name@$join_pod_name" && sleep 5s
         if echo "$(_cluster_member)" | grep -q "$join_pod_name"
         then
@@ -51,8 +51,8 @@ _rejoin_cluster_dns() {
     fi
 }
 
-# Rejoining cluster for election fellows
-_rejoin_cluster_elector() {
+# (Re-)join cluster - election derived
+_join_cluster_elector() {
     [ -e "$HOME/.ejabberd_ready" ] && rm $HOME/.ejabberd_ready
     if [ "$(echo $(_cluster_member) | wc -l)" -gt "1" ]
     then
@@ -60,7 +60,7 @@ _rejoin_cluster_elector() {
         NO_WARNINGS=true ejabberdctl leave_cluster "$sts_name@$pod_name.${headless_svc}"
     fi
     while ! nc -z "$leader.${headless_svc}:${ERL_DIST_PORT:-5210}"; do sleep 1; done
-    info "==> Will re-join leader "$sts_name@$leader.${headless_svc}" ..."
+    info "==> Will (re-)join leader "$sts_name@$leader.${headless_svc}" ..."
     ejabberdctl join_cluster "$sts_name@$leader.${headless_svc}" && sleep 5s
     if echo "$(_cluster_member)" | grep -q "$leader"
     then
@@ -88,17 +88,17 @@ then
         ## if leader is not part of fellow's cluster list, re-join leader.
         elif echo "$(_cluster_member)" | grep -q "$leader"
         then
-            info "==> $pod_name is fellow, healthy and connected to $leader ..."
+            info "==> $pod_name is fellow, healthy and connected to leader $leader ..."
             [ ! -e "$HOME/.ejabberd_ready" ] && touch $HOME/.ejabberd_ready
             return 0
         else
-            info "==> $pod_name is fellow, but not connected to $leader ..."
-            _rejoin_cluster_elector
+            info "==> $pod_name is fellow, but not connected to leader $leader ..."
+            _join_cluster_elector
         fi
     elif [ ! -z "$cluster_pod_names" ] && [ ! "$cluster_pod_names" = 'NXDOMAIN' ]
     then
         info "==> Other healthy pods detected ..."
-        _rejoin_cluster_dns
+        _join_cluster_dns
     else
         info "==> No other healthy pods detected ..."
         [ ! -e "$HOME/.ejabberd_ready" ] && touch $HOME/.ejabberd_ready
