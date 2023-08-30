@@ -29,6 +29,11 @@ spec:
               name: sql
             - mountPath: /flyway/conf
               name: config
+            {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "sqlite") }}
+            - mountPath: {{ default "/opt/ejabberd/sqlite/ejabberd.db" .Values.sqlDatabase.config.sql_database }}
+              subPath: {{ default "ejabberd.db" .Values.sqlDatabase.sqlite.fileName }}
+              name: {{ include "ejabberd.fullname" . }}-sqlite
+            {{- end }}
       volumes:
         - name: sql
           configMap:
@@ -40,6 +45,15 @@ spec:
         - name: config
           secret:
             secretName: {{ include "ejabberd.fullname" . }}-flyway-config
+        {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "sqlite") }}
+        - name: {{ include "ejabberd.fullname" . }}-sqlite
+          persistentVolumeClaim:
+            {{- if .Values.sqlDatabase.sqlite.existingClaim }}
+            claimName: {{ default "ejabberd-sqlite" .Values.sqlDatabase.sqlite.existingClaim }}
+            {{ else }}
+            claimName: {{ include "ejabberd.fullname" . }}-sqlite
+            {{- end }}
+        {{- end }}
       restartPolicy: Never
 {{- end }}
 {{- end }}

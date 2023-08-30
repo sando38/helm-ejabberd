@@ -160,6 +160,11 @@
           {{- toYaml . | nindent 10 }}
         {{- end }}
         volumeMounts:
+        {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "sqlite") }}
+          - name: {{ include "ejabberd.fullname" . }}-sqlite
+            mountPath: {{ default "/opt/ejabberd/sqlite/ejabberd.db" .Values.sqlDatabase.config.sql_database }}
+            subPath: {{ default "ejabberd.db" .Values.sqlDatabase.sqlite.fileName }}
+        {{- end }}
         {{- if .Values.certFiles.sideCar.enabled }}
           - name: {{ include "ejabberd.fullname" . }}-certs
             mountPath: /opt/ejabberd/certs
@@ -313,6 +318,15 @@
         {{- tpl (toYaml .Values.topologySpreadConstraints) . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "sqlite") }}
+        - name: {{ include "ejabberd.fullname" . }}-sqlite
+          persistentVolumeClaim:
+            {{- if .Values.sqlDatabase.sqlite.existingClaim }}
+            claimName: {{ default "ejabberd-sqlite" .Values.sqlDatabase.sqlite.existingClaim }}
+            {{ else }}
+            claimName: {{ include "ejabberd.fullname" . }}-sqlite
+            {{- end }}
+        {{- end }}
         {{- if .Values.certFiles.sideCar.enabled }}
         - name: {{ include "ejabberd.fullname" . }}-certs
           emptyDir: {}

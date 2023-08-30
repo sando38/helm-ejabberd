@@ -1,0 +1,22 @@
+{{- if (eq (toString .Values.sqlDatabase.config.sql_type) "sqlite") }}
+{{- if not .Values.sqlDatabase.sqlite.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ejabberd.fullname" . }}-sqlite
+  namespace: {{ template "ejabberd.namespace" . }}
+  labels:
+    {{- include "ejabberd.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+    {{- range $name := .Values.sqlDatabase.sqlite.accessModes }}
+      - {{ $name }}
+    {{- end }}
+  {{- if .Values.sqlDatabase.sqlite.storageClass }}
+  storageClassName: {{ default "standard" .Values.sqlDatabase.sqlite.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ default "2Gi" .Values.sqlDatabase.sqlite.size }}
+{{- end }}
+{{- end }}

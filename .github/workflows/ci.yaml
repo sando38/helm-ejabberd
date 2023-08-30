@@ -23,9 +23,12 @@ jobs:
     # concurrency: ci-${{ github.ref }}
     strategy:
       matrix:
-        dbApp: [pgsql, mariadb, mysql, mssql]
+        dbApp: [pgsql, mariadb, mysql, mssql, sqlite]
         dbSchema: [default, new]
         dbBaseline: [23.04, none]
+        exclude:
+          - dbApp: sqlite
+            dbBaseline: 23.04
       fail-fast: false
     steps:
       ## If more is needed:
@@ -54,6 +57,11 @@ jobs:
           kubectl get nodes -o wide
           echo "DB_APP=$(echo ${{ matrix.dbApp }} | sed -e 's|pgsql|postgresql|')" >> $GITHUB_ENV
           echo "XMPP_DOMAIN=${{ github.run_id }}-${{ strategy.job-index }}.example.com" >> $GITHUB_ENV
+
+      - name: ${{ matrix.dbApp }} | deploy a nfs storage provisioner
+        if: matrix.dbApp == 'sqlite'
+        run: |
+          kubectl apply -f .github/ci/nfs-server-ci.yaml
 
       - name: ${{ matrix.dbApp }} | w/ db baseline ${{ matrix.dbSchema }} | deploy helm chart
         if: matrix.dbBaseline != 'none' && matrix.dbApp != 'mssql'
@@ -115,6 +123,11 @@ jobs:
           kubectl create secret generic custom-cert --from-file=./cert.pem
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
+
+      - name: ${{ matrix.dbApp }} | create PVC with RWX access mode
+        if: matrix.dbApp == 'sqlite'
+        run: |
+          kubectl apply -f .github/ci/flyway-baseline/pvc-${{ matrix.dbApp }}.yaml
 
       - name: ${{ matrix.dbApp }} | check deployment
         run: |
@@ -180,21 +193,30 @@ jobs:
           then sql_schema="--set sqlDatabase.newSqlSchema=true"
           fi
 
-          if [ "${{ matrix.dbApp }}" = 'pgsql' ]
+          if [ "${{ matrix.dbApp }}" = 'sqlite' ]
+          then
+            sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_database=/opt/ejabberd/${{ matrix.dbApp }}/ejabberd.db \
+              --set sqlDatabase.config.sqlite.fileName=ejabberd.db \
+              --set sqlDatabase.config.sqlite.existingClaim=nfs"
+          elif [ "${{ matrix.dbApp }}" = 'pgsql' ]
           then
             sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
               --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_database=${{ env.DB }} \
               --set sqlDatabase.flyway.keyValue=?sslmode=disable"
           elif [ ${{ matrix.dbApp }} = 'mysql' ] || [ ${{ matrix.dbApp }} = 'mariadb' ]
           then
             sql_options="--set sqlDatabase.config.sql_type=mysql \
               --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_database=${{ env.DB }} \
               --set sqlDatabase.flyway.keyValue=?useSSL=false \
               --set sqlDatabase.flyway.mysqlFlavor=${{ matrix.dbApp }}"
           elif [ "${{ matrix.dbApp }}" = 'mssql' ]
           then
             sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
               --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
+              --set sqlDatabase.config.sql_database=${{ env.DB }} \
               --set sqlDatabase.flyway.keyValue=;integratedSecurity=false;encrypt=false;trustServerCertificate=true;"
           fi
 
