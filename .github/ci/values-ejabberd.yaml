@@ -1,3 +1,6 @@
+elector:
+  enabled: "false"
+
 certFiles:
   secretName:
     - custom-cert
