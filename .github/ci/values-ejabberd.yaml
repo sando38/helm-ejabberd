@@ -47,4 +47,4 @@ modules:
         "Access-Control-Allow-Headers": "Content-Type"
 
 persistence:
-  enabled: true
+  enabled: false
