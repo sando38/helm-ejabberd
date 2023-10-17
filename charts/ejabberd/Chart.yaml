@@ -3,7 +3,7 @@ name: ejabberd
 description: ejabberd XMPP server helm chart
 type: application
 version: 0.6.0
-appVersion: "78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s6"
+appVersion: "23.10-k8s1"
 keywords:
   - xmpp
   - mqtt

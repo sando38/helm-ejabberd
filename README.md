@@ -32,7 +32,7 @@ The chart uses a custom ejabberd image, which is based on the [official](https:/
 ejabberd container image. Currently only built for `x86_64` due to an issue in
 QEMU - now resolved, however. So there will be soon an `arm64` variant as well.
 
-The image name is: `ghcr.io/sando38/ejabberd:23.xx-k8s1`
+The image name is: `ghcr.io/sando38/ejabberd:23.10-k8s1`
 
 ### Difference to the official ejabberd container image
 
@@ -58,7 +58,7 @@ A short summary:
 ### Image tags
 
 The patches are defined per release, hence a container image tag always bears
-the ejabberd release, e.g.: `23.xx`.
+the ejabberd release, e.g.: `23.10`.
 
 Furthermore, a suffix `-k8s1` is used in case the image needs an update. The
 first release image has a suffix `-k8s1`.
