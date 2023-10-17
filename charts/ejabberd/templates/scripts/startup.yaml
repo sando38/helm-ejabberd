@@ -28,12 +28,12 @@ data:
 
     info()
     {
-        echo "$myself: $*"
+        echo "$myself: $*" > /proc/1/fd/1
     }
 
     error()
     {
-        echo >&2 "$myself: $*"
+        echo >&2 "$myself: $*" > /proc/1/fd/1
     }
 
     pod_name="${POD_NAME:-$(hostname -s)}" # e.g. pod-0
