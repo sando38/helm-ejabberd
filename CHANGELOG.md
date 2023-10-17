@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+
+## 0.6.1 - 2023-10-17
 ### Changed
 - Bumb ejabberd image to `23.10-k8s1` - changelog: [ejabberd 23.10](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2310).
 - healthcheck.sh: output to [entrypoint](https://stackoverflow.com/a/75257695)
