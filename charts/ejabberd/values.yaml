@@ -764,6 +764,18 @@ sqlDatabase:
     # sql_database: ejabberd
     # sql_username: ejabberd
     # sql_password: ejabberd
+  # -- Define fileName and existingClaim in case you use sqlite.
+  sqlite:
+    # -- The file name must match the file name of
+    #    .Values.sqlDatabase.config.sql_database
+    fileName: ejabberd.db
+    # -- Use an existing claim with ReadWriteMany access mode.
+    # existingClaim: ejabberd-sqlite
+    # -- Let the chart create a PVC for sqlite
+    accessModes:
+      - ReadWriteMany
+    size: 2Gi
+    # storageClass: ""
   flyway:
     ## - database connection details are mapped from .Values.sqlDatabase.config
     enabled: false
@@ -898,15 +910,15 @@ volumes: []
 #       path: run.sh
 #     - key: ejabberdctl
 #       path: ejabberdctl
-# - name: upload
-#   mountPath: "/opt/ejabberd/upload"
-# - name: '{{ printf "%s-configs" .Release.Name }}'
-#   mountPath: "/config"
 
 # -- Additional volumeMounts to add to the ejabberd container
 additionalVolumeMounts: []
 # - name: run-ejabberd
 #   mountPath: /usr/local/bin
+# - name: upload
+#   mountPath: "/opt/ejabberd/upload"
+# - name: '{{ printf "%s-configs" .Release.Name }}'
+#   mountPath: "/config"
 
 ingress:
   enabled: false
