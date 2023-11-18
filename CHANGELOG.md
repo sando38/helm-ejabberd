@@ -4,10 +4,12 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 
 ## Unreleased
+### Changed
+- Bump ejabberd image to `23.10-k8s2` - update of runtime dependencies.
 
 ## 0.6.1 - 2023-10-17
 ### Changed
-- Bumb ejabberd image to `23.10-k8s1` - changelog: [ejabberd 23.10](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2310).
+- Bump ejabberd image to `23.10-k8s1` - changelog: [ejabberd 23.10](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2310).
 - healthcheck.sh: output to [entrypoint](https://stackoverflow.com/a/75257695)
 
 ## 0.6.0 - 2023-08-30
@@ -26,7 +28,7 @@ project adheres to [Semantic Versioning][SemVer].
   of ejabberd modules.
 - Move image run scripts into the chart templates. This enables admins to easier
   exchange the container image.
-- Bumb ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s6`.
+- Bump ejabberd image to `78f81de252dc932cd47b91d1a84ca8e8f0647498-k8s6`.
 
 ### Fixed
 - Fix parsing `host` values.
