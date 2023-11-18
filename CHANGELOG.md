@@ -2,8 +2,10 @@
 
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
-
 ## Unreleased
+
+
+## 0.6.2 - 2023-11-18
 ### Changed
 - Bump ejabberd image to `23.10-k8s2` - update of runtime dependencies.
 
