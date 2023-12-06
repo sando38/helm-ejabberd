@@ -1,3 +1,4 @@
 .deploy
 override.yaml
 token
+.DS_Store
