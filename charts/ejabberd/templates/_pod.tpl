@@ -96,9 +96,8 @@
           {{- else }}
           exec:
             command:
-            - /bin/sh
-            - -c
-            - healthcheck.sh
+            - cat
+            - /opt/ejabberd/.ejabberd_ready
           failureThreshold: 10
           periodSeconds: 3
           {{- end }}
@@ -119,10 +118,11 @@
           {{- else }}
           exec:
             command:
-            - /bin/sh
-            - -c
-            - healthcheck.sh
+            - cat
+            - /opt/ejabberd/.ejabberd_ready
           periodSeconds: 15
+          failureThreshold: 10
+          terminationGracePeriodSeconds: 10
           {{- end }}
         lifecycle:
           {{- with .Values.statefulSet.lifecycle }}

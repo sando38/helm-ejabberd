@@ -108,6 +108,18 @@ then
         [ ! -e "$HOME/.ejabberd_ready" ] && touch $HOME/.ejabberd_ready
         return 0
     fi
+elif [ ! "$pod_status" = 'unhealthy' ] && [ ! -e $HOME/.ejabberd_ready ]
+then
+    vhosts="$(ejabberdctl registered_vhosts)"
+    for vhost in $vhosts
+    do
+        info "==> $pod_name is healthy, but not ready, delete mnesia for $vhost ..."
+        ejabberdctl delete_mnesia "$vhost"
+    done
+    if [ "${ELECTOR_ENABLED:-false}" = 'true' ]
+    then _join_cluster_elector
+    else _join_cluster_dns
+    fi
 else
     return 3
 fi
