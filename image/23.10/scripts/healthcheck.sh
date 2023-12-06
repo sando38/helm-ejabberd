@@ -117,7 +117,10 @@ then
         ejabberdctl delete_mnesia "$vhost"
     done
     if [ "${ELECTOR_ENABLED:-false}" = 'true' ]
-    then _join_cluster_elector
+    then
+      export leader="$(wget -cq $election_url -O - | jq -r .leader)"
+      ejabberdctl set_master "$sts_name@$leader.${headless_svc}"
+      _join_cluster_elector
     else _join_cluster_dns
     fi
 else
