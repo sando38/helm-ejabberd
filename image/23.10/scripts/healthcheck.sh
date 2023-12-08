@@ -19,7 +19,7 @@ svc_pod_names="$(nslookup -q=srv "$headless_svc" | grep "$headless_svc" | awk '{
 cluster_pod_names="$(echo $svc_pod_names | sed -e "s|$pod_name.$headless_svc||g")"
 sts_name="$(echo $pod_name | sed 's|-[0-9]\+||g')"
 api_url="127.0.0.1:5281"
-pod_status="$(wget -O - --post-data '{}' $api_url/api/status || echo 'unhealthy')"
+pod_status="$(wget -q -O - --post-data '{}' $api_url/api/status || echo 'unhealthy')"
 election_url="${ELECTION_URL:-127.0.0.1:4040}"
 
 # List cluster members
