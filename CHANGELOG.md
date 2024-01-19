@@ -3,12 +3,14 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+
+## 0.7.0 - 2024-01-18
 ### Added
 - Add option in `values.yaml` to use ejabberd's new `update_sql_schema` function
   starting from version `23.10`.
 
 ### Changed
-- Make healthcheck.sh more robust.
+- Refactor health-check mechanism to be more robust e.g. with networking issues.
 - Bump ejabberd image to `23.10-k8s3` - update of runtime dependencies.
 
 ## 0.6.2 - 2023-11-18
