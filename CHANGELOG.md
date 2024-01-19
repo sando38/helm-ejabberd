@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+### Added
+- Add option in `values.yaml` to use ejabberd's new `update_sql_schema` function
+  starting from version `23.10`.
 ### Changed
 - Make healthcheck.sh more robust.
 

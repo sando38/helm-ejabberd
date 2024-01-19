@@ -182,6 +182,7 @@ data:
     {{- if .Values.sqlDatabase.enabled }}
     default_db: {{ default "mnesia" .Values.sqlDatabase.defaultDb | quote }}
     new_sql_schema: {{ default "false" .Values.sqlDatabase.newSqlSchema | quote }}
+    update_sql_schema: {{ default "false" .Values.sqlDatabase.updateSqlSchema | quote }}
     {{- toYaml .Values.sqlDatabase.config | nindent 4 }}
     {{- end }}
 
