@@ -6,8 +6,10 @@ project adheres to [Semantic Versioning][SemVer].
 ### Added
 - Add option in `values.yaml` to use ejabberd's new `update_sql_schema` function
   starting from version `23.10`.
+
 ### Changed
 - Make healthcheck.sh more robust.
+- Bump ejabberd image to `23.10-k8s3` - update of runtime dependencies.
 
 ## 0.6.2 - 2023-11-18
 ### Changed
