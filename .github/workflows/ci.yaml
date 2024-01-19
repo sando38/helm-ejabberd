@@ -14,8 +14,9 @@ env:
   DB: "ejabberdTest1"
   DB_PASS: "ejabberdTest1Pass"
   KIND_VSN: "0.20.0"
+  K8S_VSN: "1.29.0"
   METALLB_VSN: "0.13.7"
-  CHAOS_VSN: "2.6.1"
+  CHAOS_VSN: "2.6.2"
 
 jobs:
   deploy_test:
@@ -46,11 +47,16 @@ jobs:
         run: |
           helm lint .
 
+      - name: Install kubectl version v${{ env.K8S_VSN }}
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v${{ env.K8S_VSN }}'
+
       - name: Create KinD v${{ env.KIND_VSN }} cluster
         run: |
           curl -Lo /tmp/kind https://kind.sigs.k8s.io/dl/v${{ env.KIND_VSN }}/kind-linux-amd64
           chmod +x /tmp/kind
-          /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.github/ci/kind-conf.yml
+          /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.github/ci/kind-conf.yml --image kindest/node:v${{ env.K8S_VSN }}
           kubectl get nodes -o wide
           echo "DB_APP=$(echo ${{ matrix.dbApp }} | sed -e 's|pgsql|postgresql|')" >> $GITHUB_ENV
           echo "XMPP_DOMAIN=${{ github.run_id }}-${{ strategy.job-index }}.example.com" >> $GITHUB_ENV
