@@ -27,6 +27,13 @@ SQL databases can be defined within `values.yaml` in `.Values.sqlDatabase`. Also
 check the `.Values.authentication` if you want to store users in SQL databases
 as well.
 
+#### Use ejabberd's automatic sql migration function
+
+Available since version `23.10` ([beta](https://www.process-one.net/blog/automatic-schema-update-in-ejabberd/)),
+ejabberd can perform database migrations itself.
+
+This can be enabled in the `.Values.sqlDatabase.updateSqlSchema`.
+
 #### Use the inbuilt flyway integration to manage the SQL database
 
 New in helm-ejabberd version `0.5.0`.
