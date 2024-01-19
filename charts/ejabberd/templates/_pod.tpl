@@ -107,10 +107,9 @@
           {{- else }}
           exec:
             command:
-            - /bin/sh
-            - -c
-            - healthcheck.sh
-          periodSeconds: 15
+            - cat
+            - /opt/ejabberd/.ejabberd_ready
+          periodSeconds: 3
           {{- end }}
         livenessProbe:
           {{- if .Values.statefulSet.livenessProbe }}
@@ -120,9 +119,9 @@
             command:
             - cat
             - /opt/ejabberd/.ejabberd_ready
-          periodSeconds: 15
-          failureThreshold: 10
-          terminationGracePeriodSeconds: 10
+          periodSeconds: 3
+          failureThreshold: 30
+          terminationGracePeriodSeconds: 5
           {{- end }}
         lifecycle:
           {{- with .Values.statefulSet.lifecycle }}
@@ -181,10 +180,6 @@
             subPath: ejabberdctl
             readOnly: true
           - name: {{ include "ejabberd.fullname" . }}-startup-scripts
-            mountPath: /usr/local/bin/healthcheck.sh
-            subPath: healthcheck.sh
-            readOnly: true
-          - name: {{ include "ejabberd.fullname" . }}-startup-scripts
             mountPath: /usr/local/bin/run.sh
             subPath: run.sh
             readOnly: true
@@ -221,6 +216,8 @@
             value: "{{ default "127.0.0.1:4040" .Values.elector.url }}"
           - name: ERLANG_COOKIE
             value: {{ default "erlangCookie" .Values.erlangCookie }}
+          - name: HTTP_API_URL
+            value: "{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}:{{ default 5281 .Values.certFiles.sideCar.apiPort }}"
         {{- if .Values.service.headless }}
           - name: ERL_DIST_PORT
             value: {{ default 5210 .Values.service.headless.erlDistPort | quote }}
@@ -346,8 +343,6 @@
               path: run.sh
             - key: ejabberdctl
               path: ejabberdctl
-            - key: healthcheck.sh
-              path: healthcheck.sh
         {{- if .Values.volumes }}
           {{- toYaml .Values.volumes | nindent 8 }}
         {{- end }}
