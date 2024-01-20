@@ -156,6 +156,13 @@ data:
     trap '_shutdown' SIGTERM
     touch $HOME/.ejabberd_terminate_false
 
+    # check first if vault-agent has rendered the secrets already
+    while [ ! -e $HOME/conf/ejabberd.yml ]
+    do
+        info "===> $HOME/conf/ejabberd.yml not yet rendered, waiting ..." && sleep 3
+    done
+    sleep 3
+
     info '==> Start ejabberd main process ...'
     ejabberdctl start
     tail -n+1 -F logs/ejabberd.log &

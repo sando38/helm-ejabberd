@@ -7,6 +7,7 @@ certFiles:
   sideCar:
     enabled: true
     createRbac: true
+    nativeSidecar: true
 
 listen:
   http:

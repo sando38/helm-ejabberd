@@ -247,6 +247,10 @@ certFiles:
     #     allowed to make API calls, as the sidecar makes HTTP calls to the API.
     #   - make sure `mod_http_api: {}` is part of your modules (this is default)
     enabled: false
+    # Use k8s native sidecar
+    # https://kubernetes.io/blog/2023/08/25/native-sidecar-containers/
+    #
+    nativeSidecar: false
     createRbac: true
     # The address/port of the API listener to trigger ejabberd reloads. The API
     # is exposed to 127.0.0.1 on default.
@@ -259,7 +263,7 @@ certFiles:
     apiCmd: "reload_config"
     apiMethod: "POST"
     apiPayload: "{}"
-    apiRetry: 5
+    apiRetry: 10
 
 #
 # global macros for reuse in the configuration
