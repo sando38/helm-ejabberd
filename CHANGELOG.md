@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+
+## 0.7.1 - 2024-01-19
 ### Added
 - Add support for kubernetes native sidecars added in kubernetes version `1.29`.
 
