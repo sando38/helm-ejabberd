@@ -132,7 +132,7 @@ _join_cluster_elector() {
 trap '_shutdown' SIGTERM
 touch $HOME/.ejabberd_terminate_false
 
-# check first if vault-agent has rendered the secrets already
+# check first if sidecar has rendered the configmaps/secrets already
 while [ ! -e $HOME/conf/ejabberd.yml ]
 do
     info "===> $HOME/conf/ejabberd.yml not yet rendered, waiting ..." && sleep 3
