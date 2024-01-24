@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: nfs-server
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     role: nfs-server
+ template:
+   metadata:
+     labels:
+       role: nfs-server
+     containers:
+     - name: nfs-server
+       image: gcr.io/google_containers/volume-nfs:0.8
+       ports:
+         - name: nfs
+           containerPort: 2049
+         - name: mountd
+           containerPort: 20048
+         - name: rpcbind
+           containerPort: 111
+       securityContext:
+         privileged: true
+       volumeMounts:
+         - mountPath: /exports
+           name: nfs-pvc
+     volumes:
+       - name: nfs-pvc
+         gcePersistentDisk:
+           pdName: storage-nfs
+           fsType: ext4
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: nfs-server
+spec:
+ ports:
+   - name: nfs
+     port: 2049
+   - name: mountd
+     port: 20048
+   - name: rpcbind
+     port: 111
+ selector:
+   role: nfs-server
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: nfs-pv-1
+spec:
+ capacity:
+   storage: 1Gi
+ accessModes:
+   - ReadWriteMany
+ nfs:
+   server: nfs-server.default.svc.cluster.local
+   path: "/"
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+ name: nfs-pvc-1
+spec:
+ accessModes:
+   - ReadWriteMany
+ storageClassName: ""
+ resources:
+   requests:
+     storage: 1Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ name: nfs-pv-demo-depl
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     app: nfs-pv-demo
+ template:
+   metadata:
+     name: nfs-pv-pod
+     labels:
+       app: nfs-pv-demo
+   spec:
+     containers:
+     - image: busybox
+       name: nfs-pv-multi
+       imagePullPolicy: Always
+       volumeMounts:
+         - name: nfs-volume-1
+           mountPath: "/disk1"
+     volumes:
+     - name: nfs-volume-1
+       persistentVolumeClaim:
+         claimName: nfs-pvc
