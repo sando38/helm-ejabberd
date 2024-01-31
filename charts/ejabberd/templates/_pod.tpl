@@ -43,8 +43,8 @@
         restartPolicy: Always
       {{- else }}
       - name: init-copy-certs
-        image: docker.io/library/busybox:latest
-        imagePullPolicy: IfNotPresent
+        image: docker.io/library/alpine:3.19.1
+        imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -54,6 +54,8 @@
           privileged: false
           capabilities:
             drop: [ALL]
+          seccompProfile:
+            type: RuntimeDefault
         command: ["/bin/sh", "-c"]
         args:
           - >-

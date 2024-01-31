@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+### Added
+- Add `seccompProfile` to sidecar and default `values.yaml`.
+- Add option to define sidecar image via `Values.certFiles.sideCar.image`.
 
 ## 0.7.1 - 2024-01-19
 ### Added

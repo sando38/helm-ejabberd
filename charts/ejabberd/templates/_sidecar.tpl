@@ -1,6 +1,6 @@
 {{- define "ejabberd.sideCarTemplate" }}
       - name: watcher
-        image: kiwigrid/k8s-sidecar:latest
+        image: {{ .Values.certFiles.sideCar.image }}
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
@@ -11,6 +11,8 @@
           privileged: false
           capabilities:
             drop: [ALL]
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - name: {{ include "ejabberd.fullname" . }}-certs
           mountPath: /opt/ejabberd/certs

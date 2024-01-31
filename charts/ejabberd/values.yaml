@@ -132,6 +132,8 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 9000
+  seccompProfile:
+    type: RuntimeDefault
 
 service:
   enabled: true
@@ -251,6 +253,7 @@ certFiles:
     # https://kubernetes.io/blog/2023/08/25/native-sidecar-containers/
     #
     nativeSidecar: false
+    image: "kiwigrid/k8s-sidecar:latest"
     createRbac: true
     # The address/port of the API listener to trigger ejabberd reloads. The API
     # is exposed to 127.0.0.1 on default.
