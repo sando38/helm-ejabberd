@@ -63,6 +63,25 @@ the ejabberd release, e.g.: `23.10`.
 Furthermore, a suffix `-k8s1` is used in case the image needs an update. The
 first release image has a suffix `-k8s1`.
 
+### Running this image with docker compose
+
+The image may be used with `docker compose` using the following definitions:
+
+```yml
+version: '3'
+
+services:
+  ejabberd:
+    image: ghcr.io/sando38/ejabberd:23.10-k8s3
+    command: >
+      sh -c "ejabberdctl foreground"
+    environment:
+      - ERLANG_NODE_ARG=ejabberd@localhost
+```
+
+Note: `command` and `environment` arguments are required to simulate the 
+official image behhavior.
+
 ## Merging the chart upstream
 
 Yes, that is considered and actually also desired ([link to discussion](https://github.com/processone/ejabberd/discussions/4065)).
