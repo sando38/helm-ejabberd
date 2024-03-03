@@ -512,6 +512,10 @@ data:
     DROP INDEX i_mix_subscription_chan_serv_ud;
     DROP INDEX i_mix_subscription_chan_serv;
     DROP INDEX i_mix_pam_us;
+  V24.02__ejabberd.sql: |
+    ALTER TABLE archive ADD COLUMN origin_id text NOT NULL DEFAULT '';
+    ALTER TABLE archive ALTER COLUMN origin_id DROP DEFAULT;
+    CREATE INDEX i_archive_username_origin_id ON archive USING btree (username, origin_id);
 {{- end }}
 {{- end }}
 {{- end }}

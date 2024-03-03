@@ -629,6 +629,10 @@ data:
 
     CREATE UNIQUE CLUSTERED INDEX [mqtt_topic] ON [mqtt_pub] (topic)
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON);
+  V24.02__ejabberd.sql: |
+    ALTER TABLE [dbo].[archive] ADD [origin_id] VARCHAR (250) NOT NULL;
+    CREATE INDEX [archive_username_origin_id] ON [archive] (username, origin_id)
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON);
 {{- end }}
 {{- end }}
 {{- end }}
