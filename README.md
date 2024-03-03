@@ -49,7 +49,7 @@ A short summary:
 * Stipped/ hardened image by deleting all unneccessary packages from the image,
   e.g. package managers, etc.
 * Includes additional libraries for ejabberd contribution modules
-  `ejabberd_auth_http`, `mod_captcha_rust` and `mod_ecaptcha`.
+  `ejabberd_auth_http` and `mod_ecaptcha`.
 * The three mentioned modules plus `mod_s3_upload` are installed in the image
   already.
 * No ACME support, mounting your certs as k8s secrets is necessary.

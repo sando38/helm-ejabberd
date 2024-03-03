@@ -7,6 +7,12 @@ project adheres to [Semantic Versioning][SemVer].
 - Add `seccompProfile` to sidecar and default `values.yaml`.
 - Add option to define sidecar image via `Values.certFiles.sideCar.image`.
 
+### Changed
+- Bump ejabberd image to `24.02-k8s1` - changelog: [ejabberd 24.02](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2402).
+
+### Removed
+- Remove `mod_captcha_rust`, because of a compilation error with erlang >26.
+
 ## 0.7.1 - 2024-01-19
 ### Added
 - Add support for kubernetes native sidecars added in kubernetes version `1.29`.

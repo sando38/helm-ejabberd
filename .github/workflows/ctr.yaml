@@ -37,10 +37,7 @@ jobs:
 
       - name: Patch source code and prepare build context
         working-directory: ./ejabberd-source
-        run: |
-          git apply ../image/${{ env.REF }}/patches/*.patch
-          mkdir ./k8s-scripts
-          cp -r ../image/${{ env.REF }}/scripts/* ./k8s-scripts
+        run: git apply ../image/${{ env.REF }}/patches/*.patch
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
