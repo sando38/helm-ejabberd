@@ -64,7 +64,7 @@ jobs:
           # cache-from: type=gha
           # cache-to: type=gha,mode=max
           context: ./ejabberd-source/.
-          file: ./ejabberd-source/.github/container/Dockerfile
+          file: ./image/${{ env.REF }}/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           load: true
@@ -100,7 +100,7 @@ jobs:
           # cache-from: type=gha
           # cache-to: type=gha,mode=max
           context: ./ejabberd-source/.
-          file: ./ejabberd-source/.github/container/Dockerfile
+          file: ./image/${{ env.REF }}/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           push: true
