@@ -26,9 +26,10 @@ spec:
     {{- include "ejabberd.selectorLabels" . | nindent 4 }}
   ports:
   - port: {{ default 5210 .Values.service.headless.erlDistPort }}
-    name: erl-dist-port
-    targetPort: erl-dist-port
+    name: tcp-erl-dist
+    targetPort: tcp-erl-dist
     protocol: TCP
+    appProtocol: TCP
 {{- end }}
 
 

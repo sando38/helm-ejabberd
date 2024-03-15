@@ -157,7 +157,7 @@
         {{- end }}
         {{- end }}
         {{- if .Values.service.headless }}
-        - name: "erl-dist-port"
+        - name: "tcp-erl-dist"
           containerPort: {{ default 5210 .Values.service.headless.erlDistPort }}
           protocol: "TCP"
         {{- end }}
