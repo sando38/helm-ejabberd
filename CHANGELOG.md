@@ -8,7 +8,7 @@ project adheres to [Semantic Versioning][SemVer].
 - Add option to define sidecar image via `Values.certFiles.sideCar.image`.
 
 ### Changed
-- Bump ejabberd image to `24.02-k8s1` - changelog: [ejabberd 24.02](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2402).
+- Bump ejabberd image to `24.02-k8s2` - changelog: [ejabberd 24.02](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2402).
 
 ### Removed
 - Remove `mod_captcha_rust`, because of a compilation error with erlang >26.
