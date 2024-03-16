@@ -1,5 +1,25 @@
+image:
+  registry: ghcr.io
+  repository: processone/ejabberd
+  tag: "24.02"
+
+statefulSet:
+  replicas: 1
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+    add:
+    - NET_BIND_SERVICE
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 9000
+  seccompProfile:
+    type: RuntimeDefault
+
 elector:
-  enabled: "true"
+  enabled: "false"
 
 certFiles:
   secretName:

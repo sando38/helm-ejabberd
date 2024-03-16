@@ -96,7 +96,7 @@
           {{- with .Values.resources }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
-        command: ["/tini","--", "/bin/sh", "-c", "run.sh"]
+        command: ["/sbin/tini","--", "/bin/sh", "-c", "run.sh"]
         startupProbe:
           {{- if .Values.statefulSet.startupProbe }}
           {{- toYaml .Values.statefulSet.startupProbe | nindent 10 }}

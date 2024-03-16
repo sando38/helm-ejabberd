@@ -97,7 +97,7 @@ data:
     {{- end }}
     acme:
       auto: false
-    ca_file: /opt/ejabberd/cacert/cacert.pem
+    #ca_file: /opt/ejabberd/conf/cacert.pem
     certfiles:
     {{- range $name := .Values.certFiles.secretName }}
       - /opt/ejabberd/certs/{{ $name }}/*.pem
