@@ -2,14 +2,13 @@ apiVersion: v2
 name: ejabberd
 description: ejabberd XMPP server helm chart
 type: application
-version: 0.7.1
+version: 0.8.0
 appVersion: "24.02-k8s2"
 keywords:
   - xmpp
   - mqtt
   - sip
   - stun
-  - turn
 
 maintainers:
   - name: saarko
