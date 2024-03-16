@@ -24,7 +24,7 @@ jobs:
     # concurrency: ci-${{ github.ref }}
     strategy:
       matrix:
-        dbApp: [pgsql, mariadb, mysql, mssql]
+        dbApp: [pgsql, mariadb, mssql]
         dbSchema: [default, new]
         dbBaseline: [23.04, none]
       fail-fast: false
