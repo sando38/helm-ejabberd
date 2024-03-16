@@ -15,7 +15,7 @@ env:
   DB_PASS: "ejabberdTest1Pass"
   KIND_VSN: "0.20.0"
   K8S_VSN: "1.29.0"
-  METALLB_VSN: "0.13.7"
+  METALLB_VSN: "0.14.3"
   CHAOS_VSN: "2.6.2"
 
 jobs:
