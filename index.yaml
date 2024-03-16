@@ -2,6 +2,24 @@ apiVersion: v1
 entries:
   ejabberd:
   - apiVersion: v2
+    appVersion: 24.02-k8s2
+    created: "2024-03-16T17:53:02.978529706-06:00"
+    description: ejabberd XMPP server helm chart
+    digest: 9d9e6f7e4a6b5046b129f243e6d7b9315199813394e119607d88f8bcb3d51629
+    keywords:
+    - xmpp
+    - mqtt
+    - sip
+    - stun
+    maintainers:
+    - email: saarko@tutanota.com
+      name: saarko
+    name: ejabberd
+    type: application
+    urls:
+    - https://github.com/sando38/helm-ejabberd/releases/download/ejabberd-0.8.0/ejabberd-0.8.0.tgz
+    version: 0.8.0
+  - apiVersion: v2
     appVersion: 23.10-k8s3
     created: "2024-01-19T21:24:02.120026-06:00"
     description: ejabberd XMPP server helm chart
@@ -425,4 +443,4 @@ entries:
     urls:
     - https://sando38.github.io/helm-ejabberd/ejabberd-0.1.1.tgz
     version: 0.1.1
-generated: "2024-01-19T21:24:02.120211-06:00"
+generated: "2024-03-16T17:53:02.978681606-06:00"
