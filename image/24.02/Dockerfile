@@ -1,22 +1,17 @@
 #' Define default build variables
-## specifc ARGs for METHOD='direct'
-ARG OTP_VSN='25.3'
-ARG ELIXIR_VSN='1.14.4'
-## specifc ARGs for METHOD='package'
-ARG ALPINE_VSN='3.17'
-## specifc ARGs for elector
+## source ARGs
 ARG GO_VSN='1.22'
+ARG ERLANG_VSN='25.3.2.12'
+ARG ELIXIR_VSN='1.14.5'
 ## general ARGs
-ARG VARIANT='hardened'
 ARG UID='9000'
 ARG USER='ejabberd'
 ARG HOME="opt/$USER"
-ARG METHOD='direct'
 ARG BUILD_DIR="/$USER"
 ARG VERSION='master'
 
 ################################################################################
-#' METHOD='direct' - build and install ejabberd directly from source
+#' build elector
 FROM docker.io/golang:${GO_VSN}-alpine AS elector
 RUN apk -U add --no-cache \
         build-base \
@@ -29,37 +24,74 @@ RUN git clone https://github.com/sando38/k8s-elector \
 RUN make build-linux
 
 ################################################################################
-#' METHOD='direct' - build and install ejabberd directly from source
-FROM docker.io/erlang:${OTP_VSN}-alpine AS direct
+#' Build and base image
+FROM cgr.dev/chainguard/wolfi-base AS erlang
+ARG ERLANG_VSN
+ENV LC_ALL='C.UTF-8' \
+    LANG='C.UTF-8'
 
-RUN apk -U add --no-cache \
+RUN apk -U upgrade --available && apk add --no-cache  \
         autoconf \
         automake \
         bash \
         build-base \
+        ca-certificates-bundle \
         curl \
         expat-dev \
         file \
+        freetds \
+        freetype-dev \
         gd-dev \
         git \
-        jpeg-dev \
+        libjpeg-dev \
         libpng-dev \
         libwebp-dev \
         linux-pam-dev \
+        ncurses-dev \
+        pax-utils \
+        perl-dev \
+        openssl \
         openssl-dev \
         sqlite-dev \
+        unixodbc-dev \
+        wget \
         yaml-dev \
         zlib-dev
 
-ARG ELIXIR_VSN
-RUN wget -O - https://github.com/elixir-lang/elixir/archive/v$ELIXIR_VSN.tar.gz \
+ARG ERLANG_VSN
+RUN wget -O - https://github.com/erlang/otp/releases/download/OTP-"$ERLANG_VSN"/otp_src_"$ERLANG_VSN".tar.gz \
         | tar -xzf -
 
-WORKDIR elixir-$ELIXIR_VSN
+WORKDIR /otp_src_"$ERLANG_VSN"
+RUN ./configure \
+        --prefix=/usr \
+        --sysconfdir=/etc \
+        --mandir=/usr/share/man \
+        --infodir=/usr/share/info \
+        --host="$CHOST" \
+        --build="$CBUILD" \
+        --enable-threads \
+        --enable-shared-zlib \
+        --enable-ssl=dynamic-ssl-lib \
+        --enable-jit \
+    && make install
+
+WORKDIR /
+ARG ELIXIR_VSN
+RUN wget -O - https://github.com/elixir-lang/elixir/archive/v"$ELIXIR_VSN".tar.gz \
+        | tar -xzf -
+
+WORKDIR /elixir-"$ELIXIR_VSN"
 RUN make install clean
 
 RUN mix local.hex --force \
     && mix local.rebar --force
+
+################################################################################
+#' Build and prepare ejabberd
+FROM erlang AS build
+ENV LC_ALL='C.UTF-8' \
+    LANG='C.UTF-8'
 
 ARG BUILD_DIR
 COPY / $BUILD_DIR/
@@ -75,7 +107,6 @@ RUN git clone https://github.com/processone/ejabberd-contrib --depth 1 . \
     && rm -rf mod_ecaptcha mod_http_redirect mod_s3_upload
 
 WORKDIR $BUILD_DIR
-
 RUN mv .github/container/ejabberdctl.template . \
     && ./autogen.sh \
     && ./configure --with-rebar=mix --enable-all \
@@ -86,7 +117,7 @@ WORKDIR /rootfs
 ARG VERSION
 ARG HOME
 RUN mkdir -p $HOME $HOME-$VERSION \
-    && cp -r $BUILD_DIR/_build/prod/rel/ejabberd/* $HOME-$VERSION \
+&& cp -r $BUILD_DIR/_build/prod/rel/ejabberd/* $HOME-$VERSION \
     && mv $HOME-$VERSION/conf $HOME/conf
 
 RUN cp -p $BUILD_DIR/tools/captcha*.sh $HOME-$VERSION/lib
@@ -94,33 +125,12 @@ RUN cp -p $BUILD_DIR/tools/captcha*.sh $HOME-$VERSION/lib
 RUN find "$HOME-$VERSION/bin" -name 'ejabberd' -delete \
     && find "$HOME-$VERSION/releases" -name 'COOKIE' -delete
 
-RUN wget -O "$HOME/conf/cacert.pem" 'https://curl.se/ca/cacert.pem' \
-    && sed -i '/^loglevel:/a \ \
-        \nca_file: /opt/ejabberd/conf/cacert.pem \
-        \ncertfiles: \
-        \n  - /opt/ejabberd/conf/server.pem' "$HOME/conf/ejabberd.yml"
-
-################################################################################
-#' METHOD='package' - install ejabberd from binary tarball package
-FROM docker.io/alpine:${ALPINE_VSN} AS package
-COPY tarballs/ejabberd-*-linux-musl-*.tar.gz /tmp/
-WORKDIR /rootfs
-ARG HOME
-RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
-    && mkdir -p $home_root_dir \
-    && ARCH=$(uname -m | sed -e 's/x86_64/x64/;s/aarch64/arm64/') \
-    && tar -xzf /tmp/ejabberd-*-linux-musl-$ARCH.tar.gz -C $home_root_dir
-
-################################################################################
-#' Prepare ejabberd for runtime
-FROM ${METHOD} AS ejabberd
-RUN apk -U add --no-cache \
-        git \
-        libcap \
-        openssl
-
-WORKDIR /rootfs
-ARG HOME
+## openssl does not find /etc/ssl/openssl.cnf in workflow, check later
+# RUN wget -O "$HOME/conf/cacert.pem" 'https://curl.se/ca/cacert.pem' \
+#     && sed -i '/^loglevel:/a \ \
+#         \nca_file: /opt/ejabberd/conf/cacert.pem \
+#         \ncertfiles: \
+#         \n  - /opt/ejabberd/conf/server.pem' "$HOME/conf/ejabberd.yml"
 RUN mkdir -p usr/local/bin $HOME/conf $HOME/database $HOME/logs $HOME/upload
 
 ARG BUILD_DIR
@@ -133,15 +143,16 @@ RUN if [ ! -d $HOME/.ejabberd-modules ]; \
         fi \
     fi
 
-RUN export PEM=$HOME/conf/server.pem \
-    && openssl req -x509 \
-            -batch \
-            -nodes \
-            -newkey rsa:4096 \
-            -keyout $PEM \
-            -out $PEM \
-            -days 3650 \
-            -subj "/CN=localhost"
+## openssl does not find /etc/ssl/openssl.cnf in workflow, check later
+# RUN export PEM=$HOME/conf/server.pem \
+#     && openssl req -x509 \
+#             -batch \
+#             -nodes \
+#             -newkey rsa:4096 \
+#             -keyout $PEM \
+#             -out $PEM \
+#             -days 3650 \
+#             -subj "/CN=localhost"
 
 RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
     && echo -e \
@@ -153,41 +164,19 @@ RUN home_root_dir=$(echo $HOME | sed 's|\(.*\)/.*|\1 |') \
         \nexec /$(find $home_root_dir -name ejabberdctl) \"\$@\"" \
             > usr/local/bin/ejabberdctl \
     && chmod +x usr/local/bin/* \
-    && scanelf --needed --nobanner --format '%n#p' --recursive $home_root_dir \
+    && scanelf --needed --nobanner --format '%n#p' --recursive "$PWD" \
         | tr ',' '\n' \
         | sort -u \
-        | awk 'system("[ -e $home_root_dir" $1 " ]") == 0 { next } { print "so:" $1 }' \
-        | sed -e "s|so:libc.so|so:libc.musl-$(uname -m).so.1|" \
+        | awk 'system("[ -e $PWD" $1 " ]") == 0 { next } { print "so:" $1 }' \
             > /tmp/runDeps
 
 ARG UID
 RUN chown -R $UID:$UID $HOME
 
 ################################################################################
-#' METHOD='direct' - Remove erlang/OTP & rebar3
-FROM docker.io/erlang:${OTP_VSN}-alpine AS runtime-direct
-RUN apk del .erlang-rundeps \
-    && rm -f $(which rebar3) \
-    && find /usr -type d -name 'erlang' -exec rm -rf {} + \
-    && find /usr -type l -exec test ! -e {} \; -delete
-
-################################################################################
-#' METHOD='package' - define runtime base image
-FROM docker.io/alpine:${ALPINE_VSN} AS runtime-package
-
-################################################################################
-#' Update alpine, finalize runtime environment
-FROM runtime-${METHOD} AS runtime
-COPY --from=ejabberd /tmp/runDeps /tmp/runDeps
-RUN apk -U upgrade --available --no-cache \
-    && apk add --no-cache \
-        $(cat /tmp/runDeps) \
-        gettext \
-        jq \
-        so:libcap.so.2 \
-        so:libtdsodbc.so.0 \
-        tini \
-    && ln -fs /usr/lib/libtdsodbc.so.0 /usr/lib/libtdsodbc.so
+#' Get AlpineÄs busybox for ejabberdctl script
+FROM cgr.dev/chainguard/wolfi-base AS runtime
+RUN apk -U upgrade --available --no-cache
 
 ARG USER
 ARG UID
@@ -195,44 +184,38 @@ ARG HOME
 RUN addgroup $USER -g $UID \
     && adduser -s /sbin/nologin -D -u $UID -h /$HOME -G $USER $USER
 
-################################################################################
-#' Build together production image
-FROM scratch AS prod
+COPY --from=build /tmp/runDeps /tmp/runDeps
+RUN apk add --no-cache -t .ejabberd-rundeps \
+        $(cat /tmp/runDeps) \
+        bind-tools \
+        busybox \
+        ca-certificates-bundle \
+        gettext \
+        so:libtdsodbc.so.0 \
+        jq \
+        netcat-openbsd \
+        tini \
+        wget
 
-COPY --from=runtime / /
-COPY --from=ejabberd /rootfs /
-COPY --from=elector /elector/elector /usr/local/bin/elector
-
-################################################################################
-#' Remove unneccessary packages from runtime environment
-FROM runtime AS runtime-hardened
-# we need busybox' 'ash', which became a sub-package in alpine 3.17
-RUN check=$(printf "$(cat /etc/alpine-release)\n3.17" | sort -V | head -n1) \
-    && if [ "$check" = '3.17' ]; then sub='-binsh'; fi \
-    && apk add --no-cache \
-        busybox${sub} \
-        ca-certificates
 RUN apk del --repositories-file /dev/null \
-        alpine-baselayout \
-        alpine-keys \
+        wolfi-base \
+        wolfi-keys \
         apk-tools \
-        libc-utils \
-    && rm -rf /var/cache/apk /etc/apk /tmp \
+    && rm -rf /var/cache/apk /etc/apk /tmp/* \
     && find /lib/apk/db -type f -not -name 'installed' -delete
 
 ################################################################################
-#' Build together hardened production image
-FROM scratch AS hardened
-
-COPY --from=runtime-hardened / /
-COPY --from=ejabberd /rootfs /
-COPY --from=elector /elector/elector /usr/local/bin/elector
-
-################################################################################
-#' Build together production image
-FROM ${VARIANT} AS final
+#' Forge release image
+FROM scratch AS release
 ARG USER
 ARG HOME
+ENV ERL_DIST_PORT='5210' \
+    LC_ALL='C.UTF-8' \
+    LANG='C.UTF-8'
+
+COPY --from=runtime / /
+COPY --from=build /rootfs /
+COPY --from=elector /elector/elector /usr/local/bin/elector
 
 HEALTHCHECK \
     --interval=1m \
@@ -244,7 +227,7 @@ HEALTHCHECK \
 WORKDIR /$HOME
 USER $USER
 VOLUME ["/$HOME"]
-EXPOSE 1883 4369-4399 5210 5222 5269 5280 5443
+EXPOSE 5210 5222 5223 5280
 
 ENTRYPOINT ["/sbin/tini","--","ejabberdctl"]
 CMD ["foreground"]

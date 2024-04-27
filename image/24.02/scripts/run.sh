@@ -66,7 +66,7 @@ _start_elector() {
     export pid_elector=$!
 
     info "==> Wait for elector sidecar to be available on $election_url ..."
-    while ! nc -z "$election_url"; do sleep 1; done
+    while ! nc -z $(echo $election_url | sed -e 's/:/ /'); do sleep 1; done
     info "==> elector sidecar is available on $election_url ..."
 }
 
@@ -103,7 +103,7 @@ _join_cluster_dns() {
     else
         info "==> Leaving former cluster ..."
         NO_WARNINGS=true ejabberdctl leave_cluster "$sts_name@$pod_name.${headless_svc}"
-        while ! nc -z "$join_pod_name:${ERL_DIST_PORT:-5210}"; do sleep 1; done
+        while ! nc -z "$join_pod_name ${ERL_DIST_PORT:-5210}"; do sleep 1; done
         info "==> Will (re-)join ejabberd pod $sts_name@$join_pod_name ..."
         ejabberdctl join_cluster "$sts_name@$join_pod_name" && sleep 5s
         if echo "$(_cluster_member)" | grep -q "$join_pod_name"
@@ -120,7 +120,7 @@ _join_cluster_elector() {
         info "==> Leaving non-leader cluster ..."
         NO_WARNINGS=true ejabberdctl leave_cluster "$sts_name@$pod_name.${headless_svc}"
     fi
-    while ! nc -z "$leader.${headless_svc}:${ERL_DIST_PORT:-5210}"; do sleep 1; done
+    while ! nc -z "$leader.${headless_svc} ${ERL_DIST_PORT:-5210}"; do sleep 1; done
     info "==> Will (re-)join leader "$sts_name@$leader.${headless_svc}" ..."
     ejabberdctl join_cluster "$sts_name@$leader.${headless_svc}" && sleep 5s
     if echo "$(_cluster_member)" | grep -q "$leader"

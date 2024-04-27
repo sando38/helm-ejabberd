@@ -2,4 +2,4 @@
 # -k8sX specifies the image release, new releases have a higher ordinal number
 # changes in this file trigger a rebuild of the container image
 
-24.02-k8s2
+24.02-k8s3
