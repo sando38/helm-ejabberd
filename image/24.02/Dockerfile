@@ -39,7 +39,7 @@ RUN apk -U upgrade --available && apk add --no-cache  \
         curl \
         expat-dev \
         file \
-        freetds \
+        freetds freetds-dev \
         freetype-dev \
         gd-dev \
         git \
@@ -53,7 +53,7 @@ RUN apk -U upgrade --available && apk add --no-cache  \
         openssl \
         openssl-dev \
         sqlite-dev \
-        unixodbc-dev \
+        unixodbc unixodbc-dev \
         wget \
         yaml-dev \
         zlib-dev
@@ -187,11 +187,11 @@ RUN addgroup $USER -g $UID \
 COPY --from=build /tmp/runDeps /tmp/runDeps
 RUN apk add --no-cache -t .ejabberd-rundeps \
         $(cat /tmp/runDeps) \
+        freetds unixodbc \
         bind-tools \
         busybox \
         ca-certificates-bundle \
         gettext \
-        so:libtdsodbc.so.0 \
         jq \
         netcat-openbsd \
         tini \
