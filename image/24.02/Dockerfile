@@ -1,8 +1,8 @@
 #' Define default build variables
 ## source ARGs
 ARG GO_VSN='1.22'
-ARG ERLANG_VSN='25.3.2.12'
-ARG ELIXIR_VSN='1.14.5'
+ARG ERLANG_VSN='26.2.5'
+ARG ELIXIR_VSN='1.16.3'
 ## general ARGs
 ARG UID='9000'
 ARG USER='ejabberd'
@@ -12,14 +12,20 @@ ARG VERSION='master'
 
 ################################################################################
 #' build elector
-FROM docker.io/golang:${GO_VSN}-alpine AS elector
-RUN apk -U add --no-cache \
+FROM cgr.dev/chainguard/wolfi-base AS elector
+ARG GO_VSN
+RUN apk -U upgrade --available && apk add --no-cache \
         build-base \
-        git
+        git \
+        go-$GO_VSN
 
 WORKDIR /elector
 RUN git clone https://github.com/sando38/k8s-elector \
         --branch update-packages --depth 1 .
+
+RUN go get google.golang.org/protobuf@v1.33.0 \
+    && go get golang.org/x/net@v0.23.0 \
+    && go mod tidy
 
 RUN make build-linux
 
@@ -63,6 +69,8 @@ RUN wget -O - https://github.com/erlang/otp/releases/download/OTP-"$ERLANG_VSN"/
         | tar -xzf -
 
 WORKDIR /otp_src_"$ERLANG_VSN"
+## https://github.com/processone/ejabberd/commit/b288d5c76370e44fef3a9caa6fbb888435057a2a
+RUN sed -i 's|if(size == 0 && (sql_type == SQL_LONGVARCHAR|if((sql_type == SQL_LONGVARCHAR|g' lib/odbc/c_src/odbcserver.c
 RUN ./configure \
         --prefix=/usr \
         --sysconfdir=/etc \
