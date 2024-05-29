@@ -2,7 +2,7 @@ apiVersion: v2
 name: ejabberd
 description: ejabberd XMPP server helm chart
 type: application
-version: 0.8.0
+version: 0.8.1
 appVersion: "24.02-k8s5"
 keywords:
   - xmpp
