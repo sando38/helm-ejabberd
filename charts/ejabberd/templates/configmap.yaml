@@ -184,6 +184,9 @@ data:
     new_sql_schema: {{ default "false" .Values.sqlDatabase.newSqlSchema | quote }}
     update_sql_schema: {{ default "false" .Values.sqlDatabase.updateSqlSchema | quote }}
     {{- toYaml .Values.sqlDatabase.config | nindent 4 }}
+    {{- if (eq (toString .Values.sqlDatabase.config.sql_type) "mssql") }}
+    sql_odbc_driver: "/usr/lib/libtdsodbc.so.0"
+    {{- end }}
     {{- end }}
 
     {{- if .Values.redis.enabled }}

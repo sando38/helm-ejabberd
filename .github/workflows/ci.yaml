@@ -201,7 +201,6 @@ jobs:
           then
             sql_options="--set sqlDatabase.config.sql_type=${{ matrix.dbApp }} \
               --set sqlDatabase.config.sql_server=${{ matrix.dbApp }} \
-              --set sqlDatabase.config.sql_odbc_driver="/usr/lib/libtdsodbc.so.0" \
               --set sqlDatabase.flyway.keyValue=;integratedSecurity=false;encrypt=false;trustServerCertificate=true;"
           fi
 
