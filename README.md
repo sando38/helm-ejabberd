@@ -41,6 +41,8 @@ in the [image](image) directory and the respective [workflow file](.github/workf
 
 A short summary:
 
+* Redesigned image based on [Wolfi-OS](https://github.com/wolfi-dev/os) to
+  significantly improve the performance and resource usage.
 * Includes an elector service to create kubernetes `leases` for pod leaders.
 * Includes custom scripts to automatically detect and join a cluster as well as
   for performing healthchecks and self-healing.
@@ -79,7 +81,7 @@ services:
       - ERLANG_NODE_ARG=ejabberd@localhost
 ```
 
-Note: `command` and `environment` arguments are required to simulate the 
+Note: `command` and `environment` arguments are required to simulate the
 official image behhavior.
 
 ## Merging the chart upstream

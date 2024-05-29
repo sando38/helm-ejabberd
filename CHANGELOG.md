@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
 
+### Changed
+- Bump ejabberd image to `24.02-k8s5` - This updates the container image to be
+  based on `glibc`, Erlang OTP `26.2` as well as Elixir `1.16.3`. The image is
+  now based on [Wolfi-OS](https://github.com/wolfi-dev/os). The switch will
+  significantly improve the performance and reduce resource usage.
+
 ## 0.8.0 - 2024-03-16
 ### Added
 - Add `seccompProfile` to sidecar and default `values.yaml`.
