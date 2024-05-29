@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
 
+## 0.8.1 - 2024-05-28
 ### Changed
 - Bump ejabberd image to `24.02-k8s5` - This updates the container image to be
   based on `glibc`, Erlang OTP `26.2` as well as Elixir `1.16.3`. The image is
