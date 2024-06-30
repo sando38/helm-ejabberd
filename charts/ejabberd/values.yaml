@@ -775,9 +775,9 @@ sqlDatabase:
   ##      perform SQL schema migrations:
   ##      https://www.process-one.net/blog/automatic-schema-update-in-ejabberd/
   ##
-  ## This works for pgsql, mysql and sqlite. The feature is disable by default.
+  ## This works for pgsql, mysql and sqlite. The feature is enabled by default.
   ##
-  updateSqlSchema: false
+  updateSqlSchema: true
   ##
   ## Alternative you can use flyway as a tool to migrate SQL schema
   ##
