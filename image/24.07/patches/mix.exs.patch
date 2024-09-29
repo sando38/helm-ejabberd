@@ -1,0 +1,28 @@
+diff --git a/mix.exs b/mix.exs
+index a82addd7..19eef948 100644
+--- a/mix.exs
++++ b/mix.exs
+@@ -48,6 +48,7 @@ defmodule Ejabberd.MixProject do
+                     :p1_utils, :stringprep, :syntax_tools, :yconf, :xmpp]
+      ++ cond_apps(),
+      included_applications: [:mnesia, :os_mon, :logger,
++                             :cuesport, :fusco, :ecaptcha,
+                              :cache_tab, :eimp, :mqtree, :p1_acme,
+                              :p1_oauth2, :pkix]
+      ++ cond_included_apps()]
+@@ -132,12 +133,15 @@ defmodule Ejabberd.MixProject do
+
+   defp deps do
+     [{:cache_tab, "~> 1.0"},
++     {:cuesport, github: "goj/cuesport", manager: :rebar3},
+      {:dialyxir, "~> 1.2", only: [:test], runtime: false},
++     {:ecaptcha, github: "seriyps/ecaptcha"},
+      {:eimp, "~> 1.0"},
+      {:ex_doc, "~> 0.31", only: [:dev, :edoc], runtime: false},
+      {:fast_tls, ">= 1.1.18"},
+      {:fast_xml, ">= 1.1.51"},
+      {:fast_yaml, "~> 1.0"},
++     {:fusco, "~> 0.1"},
+      {:idna, "~> 6.0"},
+      {:mqtree, "~> 1.0"},
+      {:p1_acme, "~> 1.0"},
