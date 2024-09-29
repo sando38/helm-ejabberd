@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
 
+## 0.8.3 - 2024-09-29
+### Changed
+- Bump ejabberd image to `24.07-k8s1` - changelog: [ejabberd 24.07](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2407).
+
 ## 0.8.2 - 2024-09-29
 ### Changed
 - Bump ejabberd image to `24.06-k8s1` - changelog: [ejabberd 24.06](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2406).
