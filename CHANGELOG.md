@@ -3,9 +3,12 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+
+## 0.8.2 - 2024-09-29
 ### Changed
 - Bump ejabberd image to `24.06-k8s1` - changelog: [ejabberd 24.06](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2406).
 - Switch `Values.sqlDatabase.updateSqlSchema` to `true` (new ejabberd default).
+- CI: temporarly deactivate "rtb" component, due to docker ipv6 mode.
 
 ## 0.8.1 - 2024-05-28
 ### Changed
