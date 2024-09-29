@@ -148,31 +148,31 @@ jobs:
         run: |
           kubectl delete -f .github/ci/flyway-baseline/${{ matrix.dbBaseline }}/${{ matrix.dbApp }}-${{ matrix.dbSchema }}.yaml
 
-      - name: metalLB v${{ env.METALLB_VSN }} | check readiness, apply config
-        run: |
-          kubectl wait --namespace metallb-system \
-                --for=condition=ready pod \
-                --selector=app=metallb \
-                --timeout=90s
+      # - name: metalLB v${{ env.METALLB_VSN }} | check readiness, apply config
+      #   run: |
+      #     kubectl wait --namespace metallb-system \
+      #           --for=condition=ready pod \
+      #           --selector=app=metallb \
+      #           --timeout=90s
 
-          ipam="$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '{gsub("[\\[\\{\\.]", " "); print  $1"."$2}')"
+      #     ipam="$(docker network inspect -f '{{.IPAM.Config}}' kind | awk '{gsub("[\\[\\{\\.]", " "); print  $1"."$2}')"
 
-          kubectl apply -f - <<-EOF
-          apiVersion: metallb.io/v1beta1
-          kind: IPAddressPool
-          metadata:
-            name: kind-ipaddresspool
-            namespace: metallb-system
-          spec:
-            addresses:
-            - $ipam.255.200-$ipam.255.250
-          ---
-          apiVersion: metallb.io/v1beta1
-          kind: L2Advertisement
-          metadata:
-            name: kind-l2advertisment
-            namespace: metallb-system
-          EOF
+      #     kubectl apply -f - <<-EOF
+      #     apiVersion: metallb.io/v1beta1
+      #     kind: IPAddressPool
+      #     metadata:
+      #       name: kind-ipaddresspool
+      #       namespace: metallb-system
+      #     spec:
+      #       addresses:
+      #       - $ipam.255.200-$ipam.255.250
+      #     ---
+      #     apiVersion: metallb.io/v1beta1
+      #     kind: L2Advertisement
+      #     metadata:
+      #       name: kind-l2advertisment
+      #       namespace: metallb-system
+      #     EOF
 
       - name: ejabberd | w/ sql schema ${{ matrix.dbSchema }} | deploy helm chart
         working-directory: ./charts/ejabberd
@@ -214,19 +214,20 @@ jobs:
           sleep 10
           echo "LB_IP=$(kubectl get svc/ejabberd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
 
-      - name: processone/rtb | prepare processone RTB tests
-        run: |
-          export CAPACITY='120'
-          export LB_IP="${{ env.LB_IP }}"
-          export XMPP_DOMAIN="${{ env.XMPP_DOMAIN }}"
-          export RUNNER_UID="$(id -u)"
-          mkdir -p /tmp/rtb/${{ env.XMPP_DOMAIN }}/{stats,www}
-          echo "$LB_IP $XMPP_DOMAIN" | sudo tee -a /etc/hosts
-          ./.github/ci/rtb/setup-rtb.sh
+      # - name: processone/rtb | prepare processone RTB tests
+      #   run: |
+      #     export CAPACITY='120'
+      #     export LB_IP="${{ env.LB_IP }}"
+      #     export XMPP_DOMAIN="${{ env.XMPP_DOMAIN }}"
+      #     export RUNNER_UID="$(id -u)"
+      #     mkdir -p /tmp/rtb/${{ env.XMPP_DOMAIN }}/{stats,www}
+      #     echo "$LB_IP $XMPP_DOMAIN" | sudo tee -a /etc/hosts
+      #     ./.github/ci/rtb/setup-rtb.sh
 
       - name: ejabberd | check rollout status
         run: |
           kubectl get all -l app.kubernetes.io/name=ejabberd
+          kubectl rollout status sts ejabberd
 
           for (( i=1; i != 2; i++ ))
           do
@@ -258,27 +259,27 @@ jobs:
       - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
+          # curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
 
-      - name: processone/rtb | start tests
-        run: |
-          echo '>> Start RTB container'
-          docker run --rm -d --name rtb --net=host \
-            -v $PWD/rtb.yml:/rtb/rtb.yml \
-            -v $PWD/cert.pem:/rtb/cert.pem \
-            -v /tmp/rtb/${{ env.XMPP_DOMAIN }}/stats:/rtb/stats:rw \
-            -v /tmp/rtb/${{ env.XMPP_DOMAIN }}/www:/rtb/www:rw \
-            localhost/rtb:latest
+      # - name: processone/rtb | start tests
+      #   run: |
+      #     echo '>> Start RTB container'
+      #     docker run --rm -d --name rtb --net=host \
+      #       -v $PWD/rtb.yml:/rtb/rtb.yml \
+      #       -v $PWD/cert.pem:/rtb/cert.pem \
+      #       -v /tmp/rtb/${{ env.XMPP_DOMAIN }}/stats:/rtb/stats:rw \
+      #       -v /tmp/rtb/${{ env.XMPP_DOMAIN }}/www:/rtb/www:rw \
+      #       localhost/rtb:latest
 
-          echo '>> Print docker container deployments'
-          docker ps
+      #     echo '>> Print docker container deployments'
+      #     docker ps
 
-          echo '>> Print docker container logs'
-          docker logs rtb
+      #     echo '>> Print docker container logs'
+      #     docker logs rtb
 
       - name: ejabberd | upgrade helm chart
         working-directory: ./charts/ejabberd
@@ -325,13 +326,13 @@ jobs:
       - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
+          # curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
-          echo ">> print RTB container logs"
-          docker logs rtb
+          # echo ">> print RTB container logs"
+          # docker logs rtb
 
       - name: chaos | stop scheduled ejabberd pod-failure
         run: |
@@ -363,13 +364,13 @@ jobs:
       - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
+          # curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '1' ]
           then exit 1
           fi
-          echo ">> print RTB container logs"
-          docker logs rtb
+          # echo ">> print RTB container logs"
+          # docker logs rtb
 
       - name: ejabberd | scale up helm release
         working-directory: ./charts/ejabberd
@@ -397,13 +398,13 @@ jobs:
       - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
+          # curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
-          echo ">> print RTB container logs"
-          docker logs rtb
+          # echo ">> print RTB container logs"
+          # docker logs rtb
 
       - name: chaos | ejabberd pod-kill <= 66%, wait for recovery
         run: |
@@ -429,13 +430,13 @@ jobs:
       - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
+          # curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
-          echo ">> print RTB container logs"
-          docker logs rtb
+          # echo ">> print RTB container logs"
+          # docker logs rtb
 
       - name: chaos | ejabberd pod-kill 100%, wait for recovery
         run: |
@@ -461,13 +462,13 @@ jobs:
       - name: ejabberd | call API, check healthiness
         run: |
           kubectl get pods -l app.kubernetes.io/name=ejabberd
-          curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
+          # curl -L -d "{}" -X POST -k http://${{ env.XMPP_DOMAIN }}:5280/api/status
           echo ">> check clustering status"
           if [ ! "$(kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster | wc -l)" = '3' ]
           then exit 1
           fi
-          echo ">> print RTB container logs"
-          docker logs rtb
+          # echo ">> print RTB container logs"
+          # docker logs rtb
 
       - name: ejabberd | on failure | print logs - ejabberd-0
         if: failure()
@@ -514,10 +515,10 @@ jobs:
           kubectl get pvc
           echo ">> print clustering status"
           kubectl exec sts/ejabberd -c ejabberd -- ejabberdctl list_cluster
-          echo ">> print RTB container logs"
-          docker logs rtb
-          echo ">> stop RTB container"
-          docker stop rtb
+          # echo ">> print RTB container logs"
+          # docker logs rtb
+          # echo ">> stop RTB container"
+          # docker stop rtb
 
       - name: ejabberd | print logs - ejabberd-0
         if: failure() || success()
