@@ -222,7 +222,14 @@
           - name: ELECTION_URL
             value: "{{ default "127.0.0.1:4040" .Values.elector.url }}"
           - name: ERLANG_COOKIE
-            value: {{ default "erlangCookie" .Values.erlangCookie }}
+            {{- if and .Values.erlangCookie.secretName .Values.erlangCookie.secretKey }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.erlangCookie.secretName }}
+                key: {{ .Values.erlangCookie.secretKey }}
+            {{- else }}
+            value: {{ .Values.erlangCookie.value }}
+            {{- end }}
           - name: HTTP_API_URL
             value: "{{ default "127.0.0.1" .Values.certFiles.sideCar.apiAddress }}:{{ default 5281 .Values.certFiles.sideCar.apiPort }}"
         {{- if .Values.service.headless }}

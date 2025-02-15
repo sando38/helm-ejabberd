@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+### Added
+- allow to specify a `Secret` for `Values.erlangCookie`
+
 ### Changed
 - Image renamed to `sando38/helm-ejabberd`
 - `sando38/helm-ejabberd` are built for both: `x86_64` and `arm64`

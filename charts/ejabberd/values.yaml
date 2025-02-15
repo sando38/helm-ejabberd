@@ -200,7 +200,11 @@ elector:
 #
 # Define the erlang cookie to be used for clustering
 #
-erlangCookie: "YouR-3rl4n6-C00k!3"
+erlangCookie:
+  value: "YouR-3rl4n6-C00k!3"
+  ## Name of a secret and the key within the secret to use for the erlang cookie
+  secretName: ""
+  secretKey: ""
 
 #
 # ejabberd configuration
