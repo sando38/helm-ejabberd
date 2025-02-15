@@ -176,7 +176,7 @@ data:
     {{- end }}
 
     {{- if .Values.ldap }}
-    {{- toYaml .Values.ldap.config | nindent 4 }}
+    {{- toYaml .Values.ldap | nindent 4 }}
     {{- end }}
 
     {{- if .Values.sqlDatabase.enabled }}

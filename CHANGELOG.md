@@ -4,13 +4,16 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
 ### Added
-- allow to specify a `Secret` for `Values.erlangCookie`. (potentially breaking)
+- allow to specify a `Secret` for `Values.erlangCookie`. (potentially breaking) (#15)
 
 ### Changed
 - Do not use `Cluster` scopes for config and cert-watcher RBAC. (potentially breaking)
 - Image renamed to `sando38/helm-ejabberd`
-- `sando38/helm-ejabberd` are built for both: `x86_64` and `arm64`
+- `sando38/helm-ejabberd` are built for both: `x86_64` and `arm64` (#18)
 - Bump ejabberd image to `24.12-k8s1` - changelog: [ejabberd 24.12](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2412).
+
+### Fixes
+- Fix a bug in the configuration template for `Values.ldap` (#21)
 
 ## 0.8.3 - 2024-09-29
 ### Changed
