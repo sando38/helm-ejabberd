@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: "ghcr.io"
-  IMAGE_NAME: "sando38/ejabberd"
+  IMAGE_NAME: "sando38/helm-ejabberd"
   PATCH_DIR: "image"
 
 jobs:
