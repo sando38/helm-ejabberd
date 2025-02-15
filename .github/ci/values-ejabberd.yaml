@@ -49,3 +49,7 @@ modules:
 
 persistence:
   enabled: true
+
+erlangCookie:
+  secretName: "erlang-cookie"
+  secretKey: "cookie"

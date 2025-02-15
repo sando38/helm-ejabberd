@@ -122,6 +122,10 @@ jobs:
           kubectl label secret custom-cert "helm-ejabberd/watcher=true"
           kubectl annotate secret custom-cert "k8s-sidecar-target-directory=certs/custom-cert"
 
+      - name: Apply erlang cookie secret
+        run: |
+          kubectl apply -f .github/ci/erlang-cookie.yaml
+
       - name: ${{ matrix.dbApp }} | check deployment
         run: |
           echo ">> check rollout status"
