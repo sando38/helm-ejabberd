@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
+
+## 0.9.0 - 2025-02-15
 ### Added
 - allow to specify a `Secret` for `Values.erlangCookie`. (potentially breaking) (#15)
 

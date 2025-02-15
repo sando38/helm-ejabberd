@@ -1,4 +1,3 @@
-NOTES:
 {{- if .Values.service.enabled }}
 1. Get the ejabberd connection details by running these commands:
      NOTE: It may take a few minutes for the LoadBalancer IP to be available.
