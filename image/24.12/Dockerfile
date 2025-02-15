@@ -1,7 +1,7 @@
 #' Define default build variables
 ## source ARGs
-ARG GO_VSN='1.22'
-ARG ERLANG_VSN='27.1'
+ARG GO_VSN='1.23'
+ARG ERLANG_VSN='27.2'
 ARG ELIXIR_VSN='1.17.3'
 ## general ARGs
 ARG UID='9000'
@@ -17,7 +17,7 @@ ARG GO_VSN
 RUN apk -U upgrade --available && apk add --no-cache \
         build-base \
         git \
-        go-$GO_VSN
+        go-${GO_VSN}
 
 WORKDIR /elector
 RUN git clone https://github.com/sando38/k8s-elector \
@@ -27,7 +27,10 @@ RUN go get google.golang.org/protobuf@v1.33.0 \
     && go get golang.org/x/net@v0.23.0 \
     && go mod tidy
 
-RUN make build-linux
+ARG TARGETARCH
+ARG TARGETOS
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -a -installsuffix cgo -ldflags "${LDFLAGS}" -o elector cmd/elector.go
 
 ################################################################################
 #' Build and base image
@@ -224,6 +227,13 @@ ENV ERL_DIST_PORT='5210' \
 COPY --from=runtime / /
 COPY --from=build /rootfs /
 COPY --from=elector /elector/elector /usr/local/bin/elector
+
+HEALTHCHECK \
+    --interval=1m \
+    --timeout=5s \
+    --start-period=5s \
+    --retries=10 \
+    CMD ejabberdctl status
 
 WORKDIR /$HOME
 USER $USER

@@ -13,12 +13,19 @@ on:
         required: true
 env:
   REGISTRY: "ghcr.io"
-  IMAGE_NAME: "sando38/ejabberd"
+  IMAGE_NAME: "sando38/helm-ejabberd"
   PATCH_DIR: "image"
 
 jobs:
   build_and_push:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.config.arch }} - build container image
+    runs-on: ${{ matrix.config.runs-on }}
+    strategy:
+      matrix:
+        config:
+          - { arch: amd64, runs-on: ubuntu-24.04 }
+          - { arch: arm64, runs-on: ubuntu-24.04-arm }
+      fail-fast: false
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -39,9 +46,6 @@ jobs:
         working-directory: ./ejabberd-source
         run: git apply ../image/${{ env.REF }}/patches/*.patch
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -51,29 +55,32 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            ${{ env.TAG }}
 
-      - name: Build linux/amd64 image
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build linux/${{ matrix.config.arch }} image
         uses: docker/build-push-action@v5
+        id: build
         with:
           build-args: |
             METHOD=direct
             VERSION=${{ env.TAG }}
             VARIANT=hardened
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
           context: ./ejabberd-source/.
           file: ./image/${{ env.REF }}/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}
+          platforms: linux/${{ matrix.config.arch }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Smoke Test
         run: |
           docker run -d --name ejabberd \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
           docker exec ejabberd ejabberdctl started
           docker exec ejabberd ejabberdctl status
           docker stop ejabberd
@@ -82,26 +89,65 @@ jobs:
         if: failure() || success()
         run: docker logs ejabberd
 
-      - name: Log in to the Container registry
+      - name: Export digest | ${{ matrix.config.arch }}
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest | ${{ matrix.config.arch }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.config.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 5
+
+  publish:
+    name: publish manifest
+    runs-on: ubuntu-24.04
+    needs: [build_and_push]
+    steps:
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Extract container image tag
+        run: |
+          echo "TAG=$(awk 'END{print}' ${{ env.PATCH_DIR }}/tag)" >> $GITHUB_ENV
+
+      - name: Log in to ${{ env.REGISTRY }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.EJABBERD_REPO_TOKEN }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push linux/amd64 image
-        uses: docker/build-push-action@v5
-        if: github.event_name == 'push'
+      - name: Download digests
+        uses: actions/download-artifact@v4
         with:
-          build-args: |
-            METHOD=direct
-            VERSION=${{ env.TAG }}
-            VARIANT=hardened
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
-          context: ./ejabberd-source/.
-          file: ./image/${{ env.REF }}/Dockerfile
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            ${{ env.TAG }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -r '"-t " + (.tags | join(" -t "))' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
