@@ -784,6 +784,7 @@ sqlDatabase:
   updateSqlSchema: true
   ##
   ## Alternative you can use flyway as a tool to migrate SQL schema
+  ## !!! IT IS HOWEVER NOT RECOMMENDED !!!
   ##
   flyway:
     ## - database connection details are mapped from .Values.sqlDatabase.config
@@ -928,23 +929,6 @@ volumes: []
 additionalVolumeMounts: []
 # - name: run-ejabberd
 #   mountPath: /usr/local/bin
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: ejabberd-internal
-      paths:
-        - path: /upload
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
 
 # -- If hostNetwork is true, runs ejabberd in the host network namespace
 # To prevent unschedulabel pods due to port collisions, if hostNetwork=true

@@ -12,8 +12,13 @@ project adheres to [Semantic Versioning][SemVer].
 - `sando38/helm-ejabberd` are built for both: `x86_64` and `arm64` (#18)
 - Bump ejabberd image to `24.12-k8s1` - changelog: [ejabberd 24.12](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2412).
 
-### Fixes
+### Fixed
 - Fix a bug in the configuration template for `Values.ldap` (#21)
+
+### Removed
+- `Values.ingress` definitions, they do not make much sense in a TCP context,
+  future versions of the helm chart will allow to template Kubernetes Gateway
+  API resources. (#22)
 
 ## 0.8.3 - 2024-09-29
 ### Changed
