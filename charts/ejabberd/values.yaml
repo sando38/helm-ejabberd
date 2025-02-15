@@ -6,7 +6,7 @@ image:
   # -- ejabberd image host registry
   registry: ghcr.io
   # -- ejabberd image repository
-  repository: sando38/ejabberd
+  repository: sando38/helm-ejabberd
   # -- defaults to appVersion
   tag: ""
   # -- ejabberd image pull policy
