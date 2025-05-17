@@ -23,9 +23,9 @@ sqlDatabase:
   config:
     sql_database: ejabberdTest1
     sql_username: ejabberdTest1
-    sql_password: ejabberdTest1Pass
-  flyway:
-    enabled: true
+    sql_password: SQL_PASSWORD
+  # flyway:
+  #   enabled: true
 
 authentification:
   auth_method:
@@ -36,7 +36,7 @@ redis:
   defaultRamDb: redis
   config:
     redis_server: redis-master
-    redis_password: red1sUnsecureP4ss
+    redis_password: REDIS_PASSWORD
 
 modules:
   mod_http_upload:
@@ -53,3 +53,8 @@ persistence:
 erlangCookie:
   secretName: "erlang-cookie"
   secretKey: "cookie"
+
+
+envFrom:
+  - secretRef:
+      name: "sensitive-variables"

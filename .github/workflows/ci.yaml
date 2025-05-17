@@ -124,7 +124,7 @@ jobs:
 
       - name: Apply erlang cookie secret
         run: |
-          kubectl apply -f .github/ci/erlang-cookie.yaml
+          kubectl apply -f .github/ci/k8s-secrets.yaml
 
       - name: ${{ matrix.dbApp }} | check deployment
         run: |
