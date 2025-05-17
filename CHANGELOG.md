@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file. This
 project adheres to [Semantic Versioning][SemVer].
 ## Unreleased
 
+## 0.9.1 - 2025-05-17
+### Changed
+- Bump ejabberd image to `25.04-k8s1` - changelog: [ejabberd 25.04](https://github.com/processone/ejabberd/blob/master/CHANGELOG.md#version-2504).
+- Update chart README.md to describe usage of `EJABBERD_MARCO_*`.
+
 ## 0.9.0 - 2025-02-15
 ### Added
-- allow to specify a `Secret` for `Values.erlangCookie`. (potentially breaking) (#15)
+- Allow to specify a `Secret` for `Values.erlangCookie`. (potentially breaking) (#15)
 
 ### Changed
 - Do not use `Cluster` scopes for config and cert-watcher RBAC. (potentially breaking)

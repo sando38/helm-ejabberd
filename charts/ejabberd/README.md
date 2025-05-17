@@ -193,4 +193,40 @@ the exposed nodeport, which may be defined in `.Values.listen.c2s.nodePort`.
 
 ## Configuration items
 
+To define `Secrets` as environment variables, make use of the introduced feature
+of the `EJABBERD_MACRO_*` variables. These will create macros and replace any
+placeholder like in the below example:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sensitive-variables
+stringData:
+  EJABBERD_MACRO_REDIS_PASSWORD: "red1sUnsecureP4ss"
+  EJABBERD_MACRO_SQL_PASSWORD: "ejabberdTest1Pass"
+```
+
+And in the `values.yaml` file:
+
+```yaml
+redis:
+  enabled: true
+  config:
+    redis_server: redis
+    redis_password: REDIS_PASSWORD
+
+sqlDatabase:
+  enabled: true
+  defaultDb: sql
+  config:
+    sql_database: ejabberd
+    sql_username: ejabberd
+    sql_password: SQL_PASSWORD
+
+envFrom:
+  - secretRef:
+      name: "sensitive-variables"
+```
+
 t.b.d.
