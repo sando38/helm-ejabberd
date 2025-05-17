@@ -529,7 +529,7 @@ shaperRules: {}
 # https://github.com/processone/ejabberd-contrib
 #
 # Hint:
-# -- The image ghcr.io/sando38/ejabberd:xx.xx-k8s includes the modules
+# -- The image ghcr.io/sando38/helm-ejabberd:xx.xx-k8s includes the modules
 #    ejabberd_auth_http, mod_captcha_rust, mod_ecaptcha & mod_s3_upload already.
 #
 installContribModules: {}
