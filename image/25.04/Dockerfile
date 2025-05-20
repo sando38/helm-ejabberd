@@ -206,6 +206,7 @@ RUN apk add --no-cache -t .ejabberd-rundeps \
         jq \
         netcat-openbsd \
         tini \
+        tzdata \
         wget
 
 RUN apk del --repositories-file /dev/null \
